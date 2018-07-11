@@ -1,0 +1,42 @@
+[
+  {
+    "label": "个人信息",
+    "components": [
+      {
+        "label": "姓名",
+        "type": "text",
+        "id": "userName"
+      },
+      {
+        "label": "手机号",
+        "type": "textSec",
+        "id": "mobileNo"
+      },
+      {
+        "label": "居住地区",
+        "type": "city",
+        "id": "homeCity"
+      }
+    ]
+  },
+  {
+    "label": "工作信息",
+    "components": [
+      {
+        "label": "单位名称",
+        "type": "text",
+        "id": "userName"
+      },
+      {
+        "label": "手机号",
+        "type": "textSec",
+        "id": "mobileNo"
+      },
+      {
+        "label": "工作地区",
+        "type": "city",
+        "id": "workCity"
+      }
+    ]
+  }
+]
