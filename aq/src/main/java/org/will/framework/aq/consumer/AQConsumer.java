@@ -59,7 +59,7 @@ public abstract class AQConsumer {
         }
 
         if (aqWatcher == null || !aqWatcher.isAlive()) {
-            String watcherName = "AQWatcherThread-" + topic.trim();
+            String watcherName = "AQWatcher-Thread-" + topic.trim();
             aqWatcher = new AQWatcher(watcherName, this);
             aqWatcher.start();
         }
@@ -88,7 +88,7 @@ public abstract class AQConsumer {
         // 按照顺序创建线程
         int newNeed = needWorkThreadAtoc.get() - size;
         for (int i = 0; i < maxWorkerThread; i++) {
-            String threadName = "AQWorkerThread-" + topic.trim() + "_" + i;
+            String threadName = "AQWorker-Thread-" + topic.trim() + "-" + i;
             if (workerThreadMap.containsKey(threadName)) {
                 continue;
             }
@@ -250,8 +250,8 @@ public abstract class AQConsumer {
         return aqWatcher;
     }
 
-    public double getElapseAvg() {
-        return elapseAvg.get();
+    public long getElapseAvg() {
+        return Math.round((double)elapseAvg.get());
     }
 
     protected final void doSleep(long millis) {

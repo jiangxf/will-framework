@@ -36,12 +36,12 @@ public abstract class AQWorker extends AQThread {
                     if (aqConsumer.getWorkerThreadMap().size() <= aqConsumer.getNeedThread()) {
                         tryCount = 0;
 
-                        doSleep(millis + (System.currentTimeMillis() % 10) * 1000);
+                        doSleep(millis + (System.currentTimeMillis() % 5) * 1000);
                         continue;
                     }
                     return;
                 } else {
-                    doSleep(millis + (System.currentTimeMillis() % 10) * 1000);
+                    doSleep(millis + (System.currentTimeMillis() % 5) * 1000);
                     continue;
                 }
             }

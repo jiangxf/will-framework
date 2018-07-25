@@ -32,8 +32,8 @@ public class AQWatcher extends AQThread {
                 }
                 aqConsumer.setNeedThread(need);
             }
-            aqConsumer.loadAQWorkers();
 
+            aqConsumer.loadAQWorkers();
             if (queueLength > 0) {
                 logger.info("AQWatcher <> topic:{}, remain:{}, qpsAvg:{}, elapseAvg:{}, parallel:{}, running:{}, need:{}, real:{}",
                         aqConsumer.getTopic(), queueLength, aqConsumer.getQpsAvg(), aqConsumer.getElapseAvg(), parallel,

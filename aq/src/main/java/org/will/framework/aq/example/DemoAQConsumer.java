@@ -24,7 +24,7 @@ public class DemoAQConsumer extends AQConsumer {
 
     @Override
     protected AQResponse doProcessMessage(AQMessage aqRequest) {
-        doSleep(300);
+        doSleep(50);
         return null;
     }
 }

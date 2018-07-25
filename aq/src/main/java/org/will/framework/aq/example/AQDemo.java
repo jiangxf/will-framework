@@ -32,21 +32,21 @@ public class AQDemo {
         final AQProducer aqProducer = new AQProducer(aqProducerConfig);
         aqProducer.setAqQueue(aqQueue);
 
-        AQConsumer aqConsumer = new DemoAQConsumer(topic, 10, 0, aqQueue);
+        AQConsumer aqConsumer = new DemoAQConsumer(topic, 20, 0, aqQueue);
         aqConsumer.init();
 
         new Thread(new Runnable() {
             @Override
             public void run() {
                 int idx = 0;
-                while (idx++ < 200) {
+                while (idx++ < 100000) {
                     AQMessage aqMessage = new AQMessage(topic, logger);
                     aqMessage.setMessageId("msgId_" + idx);
 
                     aqProducer.send(aqMessage);
 
                     try {
-                        Thread.sleep(200);
+                        Thread.sleep(20);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -59,14 +59,14 @@ public class AQDemo {
             @Override
             public void run() {
                 int idx = 0;
-                while (idx++ < 200) {
+                while (idx++ < 100000) {
                     AQMessage aqMessage = new AQMessage(topic, logger);
                     aqMessage.setMessageId("msgId_" + idx);
 
                     aqProducer.send(aqMessage);
 
                     try {
-                        Thread.sleep(100);
+                        Thread.sleep(10);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -79,14 +79,14 @@ public class AQDemo {
             @Override
             public void run() {
                 int idx = 0;
-                while (idx++ < 200) {
+                while (idx++ < 100000) {
                     AQMessage aqMessage = new AQMessage(topic, logger);
                     aqMessage.setMessageId("msgId_" + idx);
 
                     aqProducer.send(aqMessage);
 
                     try {
-                        Thread.sleep(300);
+                        Thread.sleep(30);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
