@@ -7,6 +7,7 @@ import java.util.HashMap;
  * Created by will on 03/04/2017.
  */
 public class AQResponse extends HashMap {
+
     public AQResponse(String requestId, String result) {
         this.put("requestId", requestId);
         this.put("result", result);

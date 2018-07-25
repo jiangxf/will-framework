@@ -29,13 +29,105 @@ import java.util.Set;
  */
 public class FastJsonUtil {
 
-    static {
-        System.setProperty(IOUtils.FASTJSON_COMPATIBLEWITHJAVABEAN, "true");
-        System.setProperty(IOUtils.FASTJSON_COMPATIBLEWITHFIELDNAME, "true");
-    }
-
     public static boolean isBadJson(String jsonStr) {
         return !isGoodJson(jsonStr);
+    }
+
+    public static boolean isGoodJson(String jsonStr) {
+        if (StringUtils.isEmpty(jsonStr)) {
+            return false;
+        }
+        try {
+            new JsonParser().parse(jsonStr);
+        } catch (JsonParseException e) {
+            return false;
+        }
+        return true;
+    }
+
+    public static String toJson(Object obj) {
+        if (obj == null) {
+            return "";
+        }
+        return JSON.toJSONString(obj, serializeFilter);
+    }
+
+    public static String toPrettyJson(Object obj) {
+        if (obj == null) {
+            return "";
+        }
+        return JSON.toJSONString(obj, serializeFilter, SerializerFeature.PrettyFormat);
+    }
+
+    public static <T> T toObject(String jsonString, Class<T> cls) throws Exception {
+        T t = null;
+        try {
+            if (isGoodJson(jsonString)) {
+                Gson gson = new Gson();
+                t = gson.fromJson(jsonString, cls);
+            }
+        } catch (Exception e) {
+            throw new Exception(e.getMessage());
+        }
+        return t;
+    }
+
+    public static List<Object> toList(String jsonStr) {
+        if (StringUtils.isEmpty(jsonStr)) {
+            return null;
+        }
+
+        JSONArray jsonArr = JSON.parseArray(jsonStr);
+        List<Object> list = new ArrayList<Object>();
+        for (Iterator iterator = jsonArr.iterator(); iterator.hasNext(); ) {
+            list.add(toMap(iterator.next().toString()));
+        }
+        return list;
+    }
+
+    public static List<Map<String, Object>> toMapList(String jsonStr) {
+        if (StringUtils.isEmpty(jsonStr)) {
+            return null;
+        }
+
+        JSONArray jsonArr = JSON.parseArray(jsonStr);
+        List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+        Iterator<Object> it = jsonArr.iterator();
+        while (it.hasNext()) {
+            list.add(toMap(it.next().toString()));
+        }
+        return list;
+    }
+
+//    public static Map<String, Object> objToMap(Object entity) {
+//        return toMap(GsonWrapper.toJson(entity));
+//    }
+//
+//    public static List<Map<String, Object>> objToMapList(Object entity) {
+//        return toMapList(GsonWrapper.toJson(entity));
+//    }
+//
+//    public static List<Object> objToList(Object entity) {
+//        return toObjList(GsonWrapper.toJson(entity));
+//    }
+
+    public static Map<String, Object> toMap(String jsonStr) {
+        if (StringUtils.isEmpty(jsonStr)) {
+            return null;
+        }
+
+        // 方法一
+        //paramMap = (Map<String, Object>) JSONObject.toBean(JSONObject.fromObject(jsonStr), HashMap.class);
+
+//        // 方法二
+//        Map<String, Object> map = new HashMap<String, Object>();
+//        // 最外层解析
+//        JSONObject json = JSONObject.fromObject(jsonStr);
+//        for (Object k : json.keySet()) {
+//            map.put(k.toString(), parserValue(json.get(k)));
+//        }
+//        return map;
+        return (Map<String, Object>) JSON.parse(jsonStr);
     }
 
     private static SerializeFilter serializeFilter = new ContextValueFilter() {
@@ -100,101 +192,9 @@ public class FastJsonUtil {
         }
     };
 
-    public static boolean isGoodJson(String jsonStr) {
-        if (StringUtils.isEmpty(jsonStr)) {
-            return false;
-        }
-        try {
-            new JsonParser().parse(jsonStr);
-        } catch (JsonParseException e) {
-            return false;
-        }
-        return true;
-    }
-
-    public static String toJson(Object obj) {
-        if (obj == null) {
-            return "";
-        }
-        return JSON.toJSONString(obj, serializeFilter);
-    }
-
-    public static String toPrettyJson(Object obj) {
-        if (obj == null) {
-            return "";
-        }
-        return JSON.toJSONString(obj, serializeFilter, SerializerFeature.PrettyFormat);
-    }
-
-    public static <T> T toObject(String jsonString, Class<T> cls) throws Exception {
-        T t = null;
-        try {
-            if (isGoodJson(jsonString)) {
-                Gson gson = new Gson();
-                t = gson.fromJson(jsonString, cls);
-            }
-        } catch (Exception e) {
-            throw new Exception(e.getMessage());
-        }
-        return t;
-    }
-
-//    public static Map<String, Object> objToMap(Object entity) {
-//        return toMap(GsonWrapper.toJson(entity));
-//    }
-//
-//    public static List<Map<String, Object>> objToMapList(Object entity) {
-//        return toMapList(GsonWrapper.toJson(entity));
-//    }
-//
-//    public static List<Object> objToList(Object entity) {
-//        return toObjList(GsonWrapper.toJson(entity));
-//    }
-
-    public static List<Object> toList(String jsonStr) {
-        if (StringUtils.isEmpty(jsonStr)) {
-            return null;
-        }
-
-        JSONArray jsonArr = JSON.parseArray(jsonStr);
-        List<Object> list = new ArrayList<Object>();
-        for (Iterator iterator = jsonArr.iterator(); iterator.hasNext(); ) {
-            list.add(toMap(iterator.next().toString()));
-        }
-        return list;
-    }
-
-    public static List<Map<String, Object>> toMapList(String jsonStr) {
-        if (StringUtils.isEmpty(jsonStr)) {
-            return null;
-        }
-
-        JSONArray jsonArr = JSON.parseArray(jsonStr);
-        List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
-        Iterator<Object> it = jsonArr.iterator();
-        while (it.hasNext()) {
-            list.add(toMap(it.next().toString()));
-        }
-        return list;
-    }
-
-    public static Map<String, Object> toMap(String jsonStr) {
-        if (StringUtils.isEmpty(jsonStr)) {
-            return null;
-        }
-
-        // 方法一
-        //paramMap = (Map<String, Object>) JSONObject.toBean(JSONObject.fromObject(jsonStr), HashMap.class);
-
-//        // 方法二
-//        Map<String, Object> map = new HashMap<String, Object>();
-//        // 最外层解析
-//        JSONObject json = JSONObject.fromObject(jsonStr);
-//        for (Object k : json.keySet()) {
-//            map.put(k.toString(), parserValue(json.get(k)));
-//        }
-//        return map;
-        return (Map<String, Object>) JSON.parse(jsonStr);
+    static {
+        System.setProperty(IOUtils.FASTJSON_COMPATIBLEWITHJAVABEAN, "true");
+        System.setProperty(IOUtils.FASTJSON_COMPATIBLEWITHFIELDNAME, "true");
     }
 
 //    public static <T> List<T> toList(String jsonString, Class<T> clazz) {

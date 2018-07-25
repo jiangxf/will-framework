@@ -1,15 +1,15 @@
-package org.will.framework.aq;
-
-/**
- * Created by will on 15/04/2017.
- */
-public abstract class AQProcessor extends AQThread {
-
-    protected long millis = 1000;
-
-    public AQProcessor(String threadName, AQConsumer aqConsumer) {
-        super(threadName, aqConsumer);
-    }
+//package org.will.framework.aq;
+//
+///**
+// * Created by will on 15/04/2017.
+// */
+//public abstract class AQProcessor extends AQWorker {
+//
+//    protected long millis = 1000;
+//
+//    public AQProcessor(String threadName, AQConsumer aqConsumer) {
+//        super(threadName, aqConsumer);
+//    }
 //
 //    @Override
 //    protected void doRun() {
@@ -41,7 +41,7 @@ public abstract class AQProcessor extends AQThread {
 //            AQResponse aqResponse = doRequest(aqRequest);
 //
 //            // 记录日志
-//            //LogCollectManager.common("Consumer <> " + aqConsumer.getAction() + " - " + JsonHelper.toJson(aqRequest), "aq", aqConsumer.getAction());
+//            //LogCollectManager.cache("Consumer <> " + aqConsumer.getAction() + " - " + JsonHelper.toJson(aqRequest), "aq", aqConsumer.getAction());
 //
 //            // 统计当前处理的请求执行时间
 //            long interval = System.currentTimeMillis() - beginMillis;
@@ -56,12 +56,12 @@ public abstract class AQProcessor extends AQThread {
 //    }
 //
 //    protected abstract AQResponse doRequest(AQMessage aqRequest);
-
-    public long getMillis() {
-        return millis;
-    }
-
-    public void setMillis(long millis) {
-        this.millis = millis;
-    }
-}
+//
+//    public long getMillis() {
+//        return millis;
+//    }
+//
+//    public void setMillis(long millis) {
+//        this.millis = millis;
+//    }
+//}

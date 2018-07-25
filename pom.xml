@@ -19,6 +19,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
+        <protostuff.version>1.1.2</protostuff.version>
+
         <!--<qunar-dba-redis-version>1.6.7</qunar-dba-redis-version>-->
 
 
@@ -70,7 +72,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>23.0</version>
+                <version>20.0</version>
             </dependency>
 
             <dependency>
@@ -96,6 +98,37 @@
                 <artifactId>slf4j-log4j12</artifactId>
                 <version>1.7.21</version>
             </dependency>
+
+            <!--&lt;!&ndash; https://mvnrepository.com/artifact/org.apache.kafka/kafka &ndash;&gt;-->
+            <!--<dependency>-->
+            <!--<groupId>org.apache.kafka</groupId>-->
+            <!--<artifactId>kafka_2.12</artifactId>-->
+            <!--<version>1.1.0</version>-->
+            <!--</dependency>-->
+
+            <!-- https://mvnrepository.com/artifact/org.apache.kafka/kafka-clients -->
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka-clients</artifactId>
+                <version>1.1.0</version>
+            </dependency>
+
+            <!-- 第三方序列化 maven依赖 -->
+            <!-- 根据:https://github.com/eishay/jvm-serializers/wiki 序列化对比，使用 protostuff
+                进行序列化 -->
+            <dependency>
+                <groupId>com.dyuproject.protostuff</groupId>
+                <artifactId>protostuff-core</artifactId>
+                <version>${protostuff.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.dyuproject.protostuff</groupId>
+                <artifactId>protostuff-runtime</artifactId>
+                <version>${protostuff.version}</version>
+            </dependency>
+
+
         </dependencies>
     </dependencyManagement>
 
@@ -577,139 +610,168 @@
             </resource>
         </resources>
 
+        <pluginManagement>
+            <plugins>
+                <!-- 解决Maven插件在Eclipse内执行了一系列的生命周期引起冲突,有时候插件检查不通过，需要人为的忽略对有些插件的检查  -->
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.apache.maven.plugins</groupId>
+                                        <artifactId>maven-dependency-plugin</artifactId>
+                                        <versionRange>[2.0,)</versionRange>
+                                        <goals>
+                                            <goal>copy-dependencies</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore/>
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
 
             <!--&lt;!&ndash; deploy模块的packaging通常是jar，如果项目中没有java 源代码或资源文件，加上这一段配置使项目能通过构建 &ndash;&gt;-->
             <!--<plugin>-->
-                <!--<groupId>org.apache.maven.plugins</groupId>-->
-                <!--<artifactId>maven-jar-plugin</artifactId>-->
-                <!--<version>2.5</version>-->
-                <!--<configuration>-->
-                    <!--<archive>-->
-                        <!--<addMavenDescriptor>true</addMavenDescriptor>-->
-                    <!--</archive>-->
-                <!--</configuration>-->
+            <!--<groupId>org.apache.maven.plugins</groupId>-->
+            <!--<artifactId>maven-jar-plugin</artifactId>-->
+            <!--<version>2.5</version>-->
+            <!--<configuration>-->
+            <!--<archive>-->
+            <!--<addMavenDescriptor>true</addMavenDescriptor>-->
+            <!--</archive>-->
+            <!--</configuration>-->
             <!--</plugin>-->
 
             <!--<plugin>-->
-                <!--<groupId>org.apache.maven.plugins</groupId>-->
-                <!--<artifactId>maven-assembly-plugin</artifactId>-->
-                <!--&lt;!&ndash; 这是最新版本，推荐使用这个版本 &ndash;&gt;-->
-                <!--<version>2.2.1</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<id>assemble</id>-->
-                        <!--<goals>-->
-                            <!--<goal>single</goal>-->
-                        <!--</goals>-->
-                        <!--<phase>package</phase>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-                <!--<configuration>-->
-                    <!--<appendAssemblyId>false</appendAssemblyId>-->
-                    <!--<attach>false</attach>-->
-                <!--</configuration>-->
+            <!--<groupId>org.apache.maven.plugins</groupId>-->
+            <!--<artifactId>maven-assembly-plugin</artifactId>-->
+            <!--&lt;!&ndash; 这是最新版本，推荐使用这个版本 &ndash;&gt;-->
+            <!--<version>2.2.1</version>-->
+            <!--<executions>-->
+            <!--<execution>-->
+            <!--<id>assemble</id>-->
+            <!--<goals>-->
+            <!--<goal>single</goal>-->
+            <!--</goals>-->
+            <!--<phase>package</phase>-->
+            <!--</execution>-->
+            <!--</executions>-->
+            <!--<configuration>-->
+            <!--<appendAssemblyId>false</appendAssemblyId>-->
+            <!--<attach>false</attach>-->
+            <!--</configuration>-->
             <!--</plugin>-->
 
             <!--<plugin>-->
-                <!--<groupId>org.apache.maven.plugins</groupId>-->
-                <!--<artifactId>maven-assembly-plugin</artifactId>-->
-                <!--&lt;!&ndash; 这是最新版本，推荐使用这个版本 &ndash;&gt;-->
-                <!--<version>2.2.1</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<id>assemble</id>-->
-                        <!--<goals>-->
-                            <!--<goal>single</goal>-->
-                        <!--</goals>-->
-                        <!--<phase>package</phase>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-                <!--<configuration>-->
-                    <!--<appendAssemblyId>false</appendAssemblyId>-->
-                    <!--<attach>false</attach>-->
-                <!--</configuration>-->
+            <!--<groupId>org.apache.maven.plugins</groupId>-->
+            <!--<artifactId>maven-assembly-plugin</artifactId>-->
+            <!--&lt;!&ndash; 这是最新版本，推荐使用这个版本 &ndash;&gt;-->
+            <!--<version>2.2.1</version>-->
+            <!--<executions>-->
+            <!--<execution>-->
+            <!--<id>assemble</id>-->
+            <!--<goals>-->
+            <!--<goal>single</goal>-->
+            <!--</goals>-->
+            <!--<phase>package</phase>-->
+            <!--</execution>-->
+            <!--</executions>-->
+            <!--<configuration>-->
+            <!--<appendAssemblyId>false</appendAssemblyId>-->
+            <!--<attach>false</attach>-->
+            <!--</configuration>-->
             <!--</plugin>-->
 
             <!--<plugin>-->
-                <!--<groupId>org.apache.maven.plugins</groupId>-->
-                <!--<artifactId>maven-shade-plugin</artifactId>-->
-                <!--&lt;!&ndash;<version>1.4</version>&ndash;&gt;-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<phase>package</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>shade</goal>-->
-                        <!--</goals>-->
-                        <!--<configuration>-->
-                            <!--<createSourcesJar>false</createSourcesJar>-->
-                            <!--<promoteTransitiveDependencies>true</promoteTransitiveDependencies>-->
-                            <!--<artifactSet>-->
-                                <!--<includes>-->
-                                    <!--&lt;!&ndash; 这里只是随便拿了几个模块来作为例子，实际上如下模块是不应该打包在一起的 &ndash;&gt;-->
-                                    <!--<include>will.framework:utils</include>-->
-                                <!--</includes>-->
-                            <!--</artifactSet>-->
-                            <!--<transformers>-->
+            <!--<groupId>org.apache.maven.plugins</groupId>-->
+            <!--<artifactId>maven-shade-plugin</artifactId>-->
+            <!--&lt;!&ndash;<version>1.4</version>&ndash;&gt;-->
+            <!--<executions>-->
+            <!--<execution>-->
+            <!--<phase>package</phase>-->
+            <!--<goals>-->
+            <!--<goal>shade</goal>-->
+            <!--</goals>-->
+            <!--<configuration>-->
+            <!--<createSourcesJar>false</createSourcesJar>-->
+            <!--<promoteTransitiveDependencies>true</promoteTransitiveDependencies>-->
+            <!--<artifactSet>-->
+            <!--<includes>-->
+            <!--&lt;!&ndash; 这里只是随便拿了几个模块来作为例子，实际上如下模块是不应该打包在一起的 &ndash;&gt;-->
+            <!--<include>will.framework:utils</include>-->
+            <!--</includes>-->
+            <!--</artifactSet>-->
+            <!--<transformers>-->
 
-                            <!--</transformers>-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-                <!--</executions>-->
+            <!--</transformers>-->
+            <!--</configuration>-->
+            <!--</execution>-->
+            <!--</executions>-->
             <!--</plugin>-->
 
             <!--<plugin>-->
-                <!--<groupId>org.apache.maven.plugins</groupId>-->
-                <!--<artifactId>maven-shade-plugin</artifactId>-->
-                <!--<version>2.4.3</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<phase>package</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>shade</goal>-->
-                        <!--</goals>-->
-                        <!--<configuration>-->
-                            <!--<minimizeJar>true</minimizeJar>-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-                <!--</executions>-->
+            <!--<groupId>org.apache.maven.plugins</groupId>-->
+            <!--<artifactId>maven-shade-plugin</artifactId>-->
+            <!--<version>2.4.3</version>-->
+            <!--<executions>-->
+            <!--<execution>-->
+            <!--<phase>package</phase>-->
+            <!--<goals>-->
+            <!--<goal>shade</goal>-->
+            <!--</goals>-->
+            <!--<configuration>-->
+            <!--<minimizeJar>true</minimizeJar>-->
+            <!--</configuration>-->
+            <!--</execution>-->
+            <!--</executions>-->
             <!--</plugin>-->
 
 
-
             <!--<plugin>-->
-                <!--<groupId>org.apache.maven.plugins</groupId>-->
-                <!--<artifactId>maven-shade-plugin</artifactId>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<phase>package</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>shade</goal>-->
-                        <!--</goals>-->
-                        <!--<configuration>-->
-                            <!--<transformers>-->
-                                <!--<transformer-->
-                                        <!--implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">-->
-                                    <!--<resource>META-INF/spring.handlers</resource>-->
-                                <!--</transformer>-->
-                                <!--<transformer-->
-                                        <!--implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">-->
-                                    <!--<resource>META-INF/spring.schemas</resource>-->
-                                <!--</transformer>-->
-                            <!--</transformers>-->
-                            <!--<filters>-->
-                                <!--<filter>-->
-                                    <!--<artifact>*:*</artifact>-->
-                                    <!--<excludes>-->
-                                        <!--<exclude>META-INF/*.SF</exclude>-->
-                                        <!--<exclude>META-INF/*.DSA</exclude>-->
-                                        <!--<exclude>META-INF/*.RSA</exclude>-->
-                                    <!--</excludes>-->
-                                <!--</filter>-->
-                            <!--</filters>-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-                <!--</executions>-->
+            <!--<groupId>org.apache.maven.plugins</groupId>-->
+            <!--<artifactId>maven-shade-plugin</artifactId>-->
+            <!--<executions>-->
+            <!--<execution>-->
+            <!--<phase>package</phase>-->
+            <!--<goals>-->
+            <!--<goal>shade</goal>-->
+            <!--</goals>-->
+            <!--<configuration>-->
+            <!--<transformers>-->
+            <!--<transformer-->
+            <!--implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">-->
+            <!--<resource>META-INF/spring.handlers</resource>-->
+            <!--</transformer>-->
+            <!--<transformer-->
+            <!--implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">-->
+            <!--<resource>META-INF/spring.schemas</resource>-->
+            <!--</transformer>-->
+            <!--</transformers>-->
+            <!--<filters>-->
+            <!--<filter>-->
+            <!--<artifact>*:*</artifact>-->
+            <!--<excludes>-->
+            <!--<exclude>META-INF/*.SF</exclude>-->
+            <!--<exclude>META-INF/*.DSA</exclude>-->
+            <!--<exclude>META-INF/*.RSA</exclude>-->
+            <!--</excludes>-->
+            <!--</filter>-->
+            <!--</filters>-->
+            <!--</configuration>-->
+            <!--</execution>-->
+            <!--</executions>-->
             <!--</plugin>-->
 
             <plugin>

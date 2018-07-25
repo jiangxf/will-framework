@@ -9,101 +9,11 @@ import java.util.Map;
 /**
  * Created by will on 03/04/2017.
  */
-public class AQMessage<PARAMTYPE> implements Serializable, Cloneable {
+public class AQMessage<DATA_TYPE> implements Serializable, Cloneable {
 
-    private String requestId;
-    private PARAMTYPE params;
-    private int maxTry;
-    private int curTry;
-    private long time;
-    private Map<String, Object> attachments;
-    private String subType;
-
-    public AQMessage(PARAMTYPE params) {
-        this.params = params;
-    }
-
-    public AQMessage(PARAMTYPE params, Map<String, Object> attachments) {
-        this.params = params;
-        this.attachments = attachments;
-    }
-
-    public AQMessage(PARAMTYPE params, Map<String, Object> attachments, int maxTry) {
-        this.params = params;
-        this.attachments = attachments;
-        this.maxTry = maxTry;
-    }
-
-    public AQMessage(String requestId, PARAMTYPE params) {
-        this.requestId = requestId;
-        this.params = params;
-    }
-
-    public AQMessage(String requestId, PARAMTYPE params, Map<String, Object> attachments) {
-        this.requestId = requestId;
-        this.params = params;
-        this.attachments = attachments;
-    }
-
-    public AQMessage(String requestId, PARAMTYPE params, int maxTry) {
-        this.requestId = requestId;
-        this.params = params;
-        this.maxTry = maxTry;
-    }
-
-    public AQMessage(String requestId, PARAMTYPE params, Map<String, Object> attachments, int maxTry) {
-        this.requestId = requestId;
-        this.params = params;
-        this.attachments = attachments;
-        this.maxTry = maxTry;
-    }
-
-    public String getRequestId() {
-        return requestId;
-    }
-
-    public void setRequestId(String requestId) {
-        this.requestId = requestId;
-    }
-
-    public PARAMTYPE getParams() {
-        return params;
-    }
-
-    public void setParams(PARAMTYPE params) {
-        this.params = params;
-    }
-
-    public int getMaxTry() {
-        return maxTry;
-    }
-
-    public void setMaxTry(int maxTry) {
-        this.maxTry = maxTry;
-    }
-
-    public int getCurTry() {
-        return curTry;
-    }
-
-    public void setCurTry(int curTry) {
-        this.curTry = curTry;
-    }
-
-    public long getTime() {
-        return time;
-    }
-
-    public void setTime(long time) {
-        this.time = time;
-    }
-
-    public Map<String, Object> getAttachments() {
-        return attachments;
-    }
-
-    public void setAttachments(Map<String, Object> attachments) {
-        this.attachments = attachments;
+    public AQMessage(String topic, DATA_TYPE data) {
+        this.topic = topic;
+        this.data = data;
     }
 
     public void setAttachment(String key, Object value) {
@@ -113,6 +23,9 @@ public class AQMessage<PARAMTYPE> implements Serializable, Cloneable {
 
         this.attachments.put(key, value);
     }
+
+//    // 处理失败后的重试次数，移到 AQConsumerConfig 中
+//    private int failTime;
 
     public Object setAttachmentIfNotExist(String key, Object value) {
         if (attachments == null) {
@@ -143,11 +56,86 @@ public class AQMessage<PARAMTYPE> implements Serializable, Cloneable {
         return this.attachments.containsKey(key);
     }
 
+    private String messageId;
+
+    private DATA_TYPE data;
+
+    private int curFailTime;
+
+    private long timestamp;
+
+    private Map<String, Object> attachments;
+
+    private String subType;
+
+    private String topic;
+
+    public Map<String, Object> getAttachments() {
+        return attachments;
+    }
+
+    public void setAttachments(Map<String, Object> attachments) {
+        this.attachments = attachments;
+    }
+
     public String getSubType() {
         return subType;
     }
 
     public void setSubType(String subType) {
         this.subType = subType;
+    }
+
+    public String getMessageId() {
+        return messageId;
+    }
+
+    public void setMessageId(String messageId) {
+        this.messageId = messageId;
+    }
+
+    public DATA_TYPE getData() {
+        return data;
+    }
+
+    public void setData(DATA_TYPE data) {
+        this.data = data;
+    }
+
+    public int getCurFailTime() {
+        return curFailTime;
+    }
+
+    public void setCurFailTime(int curFailTime) {
+        this.curFailTime = curFailTime;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public String getTopic() {
+        return topic;
+    }
+
+    public void setTopic(String topic) {
+        this.topic = topic;
+    }
+
+    @Override
+    public String toString() {
+        return "AQMessage{" +
+                "messageId='" + messageId + '\'' +
+                ", data=" + data +
+                ", curFailTime=" + curFailTime +
+                ", timestamp=" + timestamp +
+                ", attachments=" + attachments +
+                ", subType='" + subType + '\'' +
+                ", topic='" + topic + '\'' +
+                '}';
     }
 }
