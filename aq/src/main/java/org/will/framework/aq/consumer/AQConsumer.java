@@ -7,7 +7,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.will.framework.aq.AQMessage;
-import org.will.framework.aq.AQResponse;
 import org.will.framework.aq.queue.AQQueue;
 import org.will.framework.util.ProtoStuffUtil;
 
@@ -17,7 +16,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.will.framework.aq.AQConstants.*;
+import static org.will.framework.aq.AQConstants.DEFAULT_QPS;
+import static org.will.framework.aq.AQConstants.MAX_WORKER_THREAD;
+import static org.will.framework.aq.AQConstants.MIN_WORKER_THREAD;
 
 /**
  * Created with IntelliJ IDEA
@@ -33,9 +34,6 @@ public abstract class AQConsumer {
         this.maxWorkerThread = MAX_WORKER_THREAD;
         this.minWorkerThread = MIN_WORKER_THREAD;
         this.aqQueue = aqQueue;
-        this.rateLimiter = RateLimiter.create(DEFAULT_QPS);
-        this.workerThreadMap = Maps.newConcurrentMap();
-        elapseQueue = new ConcurrentLinkedQueue<>();
     }
 
     public AQConsumer(String topic, int maxThread, int minThread, AQQueue aqQueue) {
@@ -43,16 +41,19 @@ public abstract class AQConsumer {
         this.maxWorkerThread = maxThread;
         this.minWorkerThread = minThread;
         this.aqQueue = aqQueue;
-        this.rateLimiter = RateLimiter.create(DEFAULT_QPS);
-        this.workerThreadMap = Maps.newConcurrentMap();
-        elapseQueue = new ConcurrentLinkedQueue<>();
     }
 
+    /**
+     * 初始化参数
+     */
     public void init() {
         loadAQWatcher();
         loadAQWorkers();
     }
 
+    /**
+     * 创建守护线程
+     */
     public final synchronized void loadAQWatcher() {
         if (StringUtils.isEmpty(topic)) {
             throw new IllegalArgumentException("type 不能为空");
@@ -65,6 +66,9 @@ public abstract class AQConsumer {
         }
     }
 
+    /**
+     * 创建消费处理线程组
+     */
     public final synchronized void loadAQWorkers() {
         // todo: 参数校验考虑放在合适的位置
         if (StringUtils.isEmpty(topic)) {
@@ -100,6 +104,11 @@ public abstract class AQConsumer {
         }
     }
 
+    /**
+     * 计算并行处理数
+     *
+     * @return
+     */
     public final int computeParallelCount() {
         if (elapseQueue.size() <= 0) {
             qpsAvg.set(0);
@@ -119,7 +128,7 @@ public abstract class AQConsumer {
         elapseQueue.clear();
 
         double elapseAvgTemp = result / size;
-        if(elapseAvgTemp < 0.01){
+        if (elapseAvgTemp < 0.01) {
             elapseAvgTemp = 0.01;
         }
         elapseAvg.set(elapseAvgTemp);
@@ -131,6 +140,11 @@ public abstract class AQConsumer {
         return new BigDecimal(parallel).intValue();
     }
 
+    /**
+     * 接收消息
+     *
+     * @return
+     */
     public AQMessage recv() {
         if (aqQueue.size(topic) > 0) {
             byte[] bytes = aqQueue.dequeue(topic);
@@ -153,15 +167,20 @@ public abstract class AQConsumer {
     protected AQWorker createAQWorker(String threadName) {
         return new AQWorker(threadName, this) {
             @Override
-            protected AQResponse processMessage(AQMessage aqMessage) {
-//                logger.info("消费消息：" + aqMessage.getMessageId());
+            protected void processMessage(AQMessage aqMessage) {
                 doProcessMessage(aqMessage);
-                return null;
             }
         };
     }
 
-    protected abstract AQResponse doProcessMessage(AQMessage aqRequest);
+    protected abstract void doProcessMessage(AQMessage aqRequest);
+
+    protected final void doSleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+        }
+    }
 
     private final void startAQWorker(String threadName) {
         AQWorker aqWorker = createAQWorker(threadName);
@@ -169,8 +188,6 @@ public abstract class AQConsumer {
 
         aqWorker.start();
     }
-
-    protected ConcurrentLinkedQueue<Long> elapseQueue;
 
     protected AQWatcher aqWatcher = null;
 
@@ -182,6 +199,8 @@ public abstract class AQConsumer {
 
     protected AQQueue aqQueue;
 
+    protected final ConcurrentLinkedQueue<Long> elapseQueue = new ConcurrentLinkedQueue<>();
+
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     protected final String topic;
@@ -190,9 +209,9 @@ public abstract class AQConsumer {
 
     protected final int minWorkerThread;
 
-    protected final RateLimiter rateLimiter;
+    protected final RateLimiter rateLimiter = RateLimiter.create(DEFAULT_QPS);
 
-    protected final ConcurrentMap<String, AQWorker> workerThreadMap;
+    protected final ConcurrentMap<String, AQWorker> workerThreadMap = Maps.newConcurrentMap();
 
     protected final AtomicInteger needWorkThreadAtoc = new AtomicInteger(0);
 
@@ -251,13 +270,6 @@ public abstract class AQConsumer {
     }
 
     public long getElapseAvg() {
-        return Math.round((double)elapseAvg.get());
-    }
-
-    protected final void doSleep(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException e) {
-        }
+        return Math.round((double) elapseAvg.get());
     }
 }

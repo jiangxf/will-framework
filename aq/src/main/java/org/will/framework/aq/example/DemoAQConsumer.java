@@ -1,9 +1,10 @@
 package org.will.framework.aq.example;
 
 import org.will.framework.aq.AQMessage;
-import org.will.framework.aq.AQResponse;
 import org.will.framework.aq.consumer.AQConsumer;
 import org.will.framework.aq.queue.AQQueue;
+
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Created with IntelliJ IDEA
@@ -23,8 +24,7 @@ public class DemoAQConsumer extends AQConsumer {
     }
 
     @Override
-    protected AQResponse doProcessMessage(AQMessage aqRequest) {
-        doSleep(50);
-        return null;
+    protected void doProcessMessage(AQMessage aqRequest) {
+        doSleep(ThreadLocalRandom.current().nextLong(100));
     }
 }

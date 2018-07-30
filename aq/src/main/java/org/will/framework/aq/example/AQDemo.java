@@ -27,7 +27,7 @@ public class AQDemo {
         AQQueue aqQueue = new LocalAQQueue();
 
         AQProducerConfig aqProducerConfig = new AQProducerConfig();
-        aqProducerConfig.setCapacity(1000);
+        aqProducerConfig.setCapacity(100000);
 
         final AQProducer aqProducer = new AQProducer(aqProducerConfig);
         aqProducer.setAqQueue(aqQueue);
@@ -39,14 +39,14 @@ public class AQDemo {
             @Override
             public void run() {
                 int idx = 0;
-                while (idx++ < 100000) {
+                while (idx++ < 1000) {
                     AQMessage aqMessage = new AQMessage(topic, logger);
                     aqMessage.setMessageId("msgId_" + idx);
 
                     aqProducer.send(aqMessage);
 
                     try {
-                        Thread.sleep(20);
+                        Thread.sleep(5);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -59,7 +59,7 @@ public class AQDemo {
             @Override
             public void run() {
                 int idx = 0;
-                while (idx++ < 100000) {
+                while (idx++ < 1000) {
                     AQMessage aqMessage = new AQMessage(topic, logger);
                     aqMessage.setMessageId("msgId_" + idx);
 
@@ -79,7 +79,7 @@ public class AQDemo {
             @Override
             public void run() {
                 int idx = 0;
-                while (idx++ < 100000) {
+                while (idx++ < 1000) {
                     AQMessage aqMessage = new AQMessage(topic, logger);
                     aqMessage.setMessageId("msgId_" + idx);
 

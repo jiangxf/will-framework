@@ -30,11 +30,13 @@ public abstract class AQThread extends Thread {
         doFinish(exception);
     }
 
-    protected void doBefore(){}
+    protected void doBefore() {
+    }
 
     protected abstract void doRun();
 
-    protected void doFinish(Exception ex) {}
+    protected void doFinish(Exception ex) {
+    }
 
     protected final void doSleep(long millis) {
         try {
