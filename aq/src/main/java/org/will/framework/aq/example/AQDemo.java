@@ -27,10 +27,9 @@ public class AQDemo {
         AQQueue aqQueue = new LocalAQQueue();
 
         AQProducerConfig aqProducerConfig = new AQProducerConfig();
-        aqProducerConfig.setCapacity(100000);
+        aqProducerConfig.setCapacity(10);
 
-        final AQProducer aqProducer = new AQProducer(aqProducerConfig);
-        aqProducer.setAqQueue(aqQueue);
+        final AQProducer aqProducer = new AQProducer(aqProducerConfig, aqQueue);
 
         AQConsumer aqConsumer = new DemoAQConsumer(topic, 20, 0, aqQueue);
         aqConsumer.init();
@@ -41,7 +40,7 @@ public class AQDemo {
                 int idx = 0;
                 while (idx++ < 1000) {
                     AQMessage aqMessage = new AQMessage(topic, logger);
-                    aqMessage.setMessageId("msgId_" + idx);
+//                    aqMessage.setMessageId("msgId_" + idx);
 
                     aqProducer.send(aqMessage);
 
@@ -61,7 +60,7 @@ public class AQDemo {
                 int idx = 0;
                 while (idx++ < 1000) {
                     AQMessage aqMessage = new AQMessage(topic, logger);
-                    aqMessage.setMessageId("msgId_" + idx);
+//                    aqMessage.setMessageId("msgId_" + idx);
 
                     aqProducer.send(aqMessage);
 
@@ -81,7 +80,7 @@ public class AQDemo {
                 int idx = 0;
                 while (idx++ < 1000) {
                     AQMessage aqMessage = new AQMessage(topic, logger);
-                    aqMessage.setMessageId("msgId_" + idx);
+//                    aqMessage.setMessageId("msgId_" + idx);
 
                     aqProducer.send(aqMessage);
 

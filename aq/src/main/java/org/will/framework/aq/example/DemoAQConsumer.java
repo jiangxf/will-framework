@@ -15,10 +15,6 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class DemoAQConsumer extends AQConsumer {
 
-    public DemoAQConsumer(String topic, AQQueue aqQueue) {
-        super(topic, aqQueue);
-    }
-
     public DemoAQConsumer(String topic, int maxThread, int minThread, AQQueue aqQueue) {
         super(topic, maxThread, minThread, aqQueue);
     }

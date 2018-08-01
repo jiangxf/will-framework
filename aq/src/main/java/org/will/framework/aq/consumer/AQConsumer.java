@@ -52,9 +52,57 @@ public abstract class AQConsumer {
     }
 
     /**
+     * 接收消息
+     *
+     * @return
+     */
+    public AQMessage recv() {
+        if (aqQueue.size(topic) > 0) {
+            byte[] bytes = aqQueue.dequeue(topic);
+            if (bytes == null || bytes.length == 0) {
+                return null;
+            }
+            return ProtoStuffUtil.deserializer(bytes, AQMessage.class);
+        }
+        return null;
+    }
+
+    public void schedule() {
+        int real = 0;
+        int parallel = computeParallelCount();
+        long queueLength = size();
+        if (queueLength <= 0) {
+            setNeedThread(getMinWorkerThread());
+        } else {
+            int need = (int) ((queueLength + parallel + getQpsAvg()) / parallel);
+            real = need;
+            if (need >= getMaxWorkerThread()) {
+                need = getMaxWorkerThread();
+            } else if (need <= getMinWorkerThread()) {
+                need = getMinWorkerThread();
+            }
+            setNeedThread(need);
+        }
+
+        loadAQWorkers();
+        if (queueLength > 0) {
+            logger.info("AQWatcher <> topic:{}, remain:{}, qpsAvg:{}, elapseAvg:{}, parallel:{}, running:{}, need:{}, real:{}",
+                    topic, queueLength, getQpsAvg(), getElapseAvg(), parallel, workerThreadMap.size(), getNeedThread(), real);
+        }
+    }
+
+    public long size() {
+        return aqQueue.size(topic);
+    }
+
+    public void acquire() {
+        rateLimiter.acquire();
+    }
+
+    /**
      * 创建守护线程
      */
-    public final synchronized void loadAQWatcher() {
+    protected final synchronized void loadAQWatcher() {
         if (StringUtils.isEmpty(topic)) {
             throw new IllegalArgumentException("type 不能为空");
         }
@@ -69,7 +117,7 @@ public abstract class AQConsumer {
     /**
      * 创建消费处理线程组
      */
-    public final synchronized void loadAQWorkers() {
+    protected final synchronized void loadAQWorkers() {
         // todo: 参数校验考虑放在合适的位置
         if (StringUtils.isEmpty(topic)) {
             throw new IllegalArgumentException("topic 不能为空");
@@ -109,7 +157,7 @@ public abstract class AQConsumer {
      *
      * @return
      */
-    public final int computeParallelCount() {
+    protected final int computeParallelCount() {
         if (elapseQueue.size() <= 0) {
             qpsAvg.set(0);
             return 30;
@@ -138,30 +186,6 @@ public abstract class AQConsumer {
             parallel = 1;
         }
         return new BigDecimal(parallel).intValue();
-    }
-
-    /**
-     * 接收消息
-     *
-     * @return
-     */
-    public AQMessage recv() {
-        if (aqQueue.size(topic) > 0) {
-            byte[] bytes = aqQueue.dequeue(topic);
-            if (bytes == null || bytes.length == 0) {
-                return null;
-            }
-            return ProtoStuffUtil.deserializer(bytes, AQMessage.class);
-        }
-        return null;
-    }
-
-    public long size() {
-        return aqQueue.size(topic);
-    }
-
-    public void acquire() {
-        rateLimiter.acquire();
     }
 
     protected AQWorker createAQWorker(String threadName) {

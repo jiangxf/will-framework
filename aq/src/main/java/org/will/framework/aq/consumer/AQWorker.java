@@ -28,12 +28,11 @@ public abstract class AQWorker extends AQThread {
         AQMessage aqMessage = null;
 
         while (true) {
-//            aqConsumer.acquire();
+            aqConsumer.acquire();
 
             // 从消息队列中取数据
-            try {
-                aqMessage = getMessage();
-            } catch (EmptyQueueException ex) {
+            aqMessage = getMessage();
+            if (aqMessage == null) {
                 return;
             }
 
@@ -55,6 +54,10 @@ public abstract class AQWorker extends AQThread {
 
     protected abstract void processMessage(AQMessage aqRequest);
 
+    protected void randomSleep() {
+        doSleep(millis + ThreadLocalRandom.current().nextInt(5) * 1000);
+    }
+
     protected final AQConsumer aqConsumer;
 
     protected final int millis;
@@ -67,13 +70,12 @@ public abstract class AQWorker extends AQThread {
                 if (++tryCount >= 2) {
                     if (aqConsumer.getWorkerThreadMap().size() <= aqConsumer.getNeedThread()) {
                         tryCount = 0;
-
-                        doSleep(millis + ThreadLocalRandom.current().nextInt(5) * 1000);
+                        randomSleep();
                         continue;
                     }
-                    throw new EmptyQueueException("队列消费完毕");
+                    return aqMessage;
                 } else {
-                    doSleep(millis + ThreadLocalRandom.current().nextInt(5) * 1000);
+                    randomSleep();
                     continue;
                 }
             } else {

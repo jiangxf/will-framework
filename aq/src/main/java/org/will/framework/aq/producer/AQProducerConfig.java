@@ -2,7 +2,6 @@ package org.will.framework.aq.producer;
 
 import static org.will.framework.aq.AQConstants.DEFAULT_CAPACITY;
 import static org.will.framework.aq.AQConstants.DEFAULT_QPS;
-import static org.will.framework.aq.AQConstants.DEFAULT_RETRIES;
 import static org.will.framework.aq.AQConstants.DEFAULT_TIMEOUT_MS;
 
 /**
@@ -13,11 +12,6 @@ import static org.will.framework.aq.AQConstants.DEFAULT_TIMEOUT_MS;
  * Time: 21:09
  */
 public class AQProducerConfig {
-
-    /**
-     * 生产者发送失败后，重试的次数
-     */
-    protected int retries = DEFAULT_RETRIES;
 
 //    /**
 //     * 该值控制生产者批量发送消息的大小，批量发送可以减少生产者到服务端的请求数，有助于提高客户端和服务端的性能。
@@ -39,20 +33,12 @@ public class AQProducerConfig {
     /**
      * 发送超时时间
      */
-    protected int timeoutMS = DEFAULT_TIMEOUT_MS;
+    protected int sendTimeoutMS = DEFAULT_TIMEOUT_MS;
 
     /**
      * 每秒发送消息数量
      */
     protected double qps = DEFAULT_QPS;
-
-    public int getRetries() {
-        return retries;
-    }
-
-    public void setRetries(int retries) {
-        this.retries = retries;
-    }
 
     public int getCapacity() {
         return capacity;
@@ -62,12 +48,12 @@ public class AQProducerConfig {
         this.capacity = capacity;
     }
 
-    public int getTimeoutMS() {
-        return timeoutMS;
+    public int getSendTimeoutMS() {
+        return sendTimeoutMS;
     }
 
-    public void setTimeoutMS(int timeoutMS) {
-        this.timeoutMS = timeoutMS;
+    public void setSendTimeoutMS(int sendTimeoutMS) {
+        this.sendTimeoutMS = sendTimeoutMS;
     }
 
     public double getQps() {

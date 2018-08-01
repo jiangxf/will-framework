@@ -5,11 +5,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.will.framework.aq.AQMessage;
+import org.will.framework.aq.exception.FullCapacityException;
 import org.will.framework.aq.queue.AQQueue;
+import org.will.framework.util.IdWorker;
 import org.will.framework.util.ProtoStuffUtil;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Created with IntelliJ IDEA
@@ -20,37 +21,39 @@ import java.util.UUID;
  */
 public class AQProducer {
 
-    public AQProducer() {
-        loadConfig(new AQProducerConfig());
+    public AQProducer(AQQueue aqQueue) {
+        this(new AQProducerConfig(), aqQueue);
     }
 
-    public AQProducer(AQProducerConfig config) {
+    public AQProducer(AQProducerConfig config, AQQueue aqQueue) {
         loadConfig(config);
+        this.aqQueue = aqQueue;
     }
 
-    public void send(AQMessage aqMessage) {
+    public String send(AQMessage aqMessage) {
+
+        // 限流
         rateLimiter.acquire();
 
+        // 初始化消息
+        String messageId = initAndCheckMessage(aqMessage);
+
+        // 消息发送前处理
+        beforeSend(aqMessage);
+
+        // 发送消息
         Throwable throwable = null;
         try {
-            beforeSend(aqMessage);
             doSend(aqMessage);
         } catch (Exception ex) {
             throwable = ex;
             logger.error(ex.getMessage());
         }
+
+        // 消息发送后处理
         afterSend(aqMessage, throwable);
-    }
 
-    public void sendAsyn(AQMessage aqMessage) {
-
-    }
-
-    public String sendForResponse(AQMessage aqMessage) {
-        String messageId = UUID.randomUUID().toString();
-        aqMessage.setMessageId(messageId);
-        send(aqMessage);
-        return aqMessage.getMessageId();
+        return messageId;
     }
 
     public void clear(String topic) {
@@ -65,31 +68,26 @@ public class AQProducer {
         return aqQueue.size(topic);
     }
 
-    private void loadConfig(AQProducerConfig config) {
-        rateLimiter = RateLimiter.create(config.qps);
-        capacity = config.getCapacity();
-        retries = config.getRetries();
-        timeoutMS = config.getTimeoutMS();
+    protected final void doSleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+        }
     }
 
-    private void beforeSend(AQMessage aqMessage) {
+    private String initAndCheckMessage(AQMessage aqMessage) {
         if (aqMessage == null || StringUtils.isEmpty(aqMessage.getTopic()) || aqMessage.getData() == null) {
             throw new IllegalArgumentException("消息类型与消息体不能为空!");
         }
 
-        int curTries = 1;
-        int sleepMS = timeoutMS / retries;
-        while (remainCapacity(aqMessage.getTopic()) <= 0 && curTries++ < retries) {
-            try {
-                Thread.sleep(sleepMS);
-            } catch (InterruptedException e) {
-            }
-
-            if (curTries == retries) {
-                throw new RuntimeException("消息发送失败，队列容量不够");
-            }
+        if (StringUtils.isEmpty(aqMessage.getMessageId())) {
+            String messageId = IdWorker.getUUID();
+            aqMessage.setMessageId(messageId);
         }
+        return aqMessage.getMessageId();
+    }
 
+    private void beforeSend(AQMessage aqMessage) {
         if (producerListeners != null) {
             for (AQProducerListener listener : producerListeners) {
                 listener.beforeSend(aqMessage);
@@ -97,7 +95,21 @@ public class AQProducer {
         }
     }
 
-    private void doSend(AQMessage aqMessage) {
+    private synchronized void doSend(AQMessage aqMessage) {
+        // 检查队列是否已满
+        int eachWaitMS = 200;
+        int totalWaitMS = sendTimeoutMS;
+        while (remainCapacity(aqMessage.getTopic()) <= 0) {
+            if (totalWaitMS <= 0) {
+                throw new FullCapacityException("消息发送失败，队列容量不够");
+            }
+
+            doSleep(eachWaitMS);
+            totalWaitMS -= eachWaitMS;
+
+            logger.warn("队列已满，等待 {}", aqMessage.getMessageId());
+        }
+
         byte[] bytes = ProtoStuffUtil.serializer(aqMessage);
         aqQueue.enqueue(aqMessage.getTopic(), bytes);
     }
@@ -110,15 +122,19 @@ public class AQProducer {
         }
     }
 
-    protected AQQueue aqQueue;
+    private void loadConfig(AQProducerConfig config) {
+        rateLimiter = RateLimiter.create(config.qps);
+        capacity = config.getCapacity();
+        sendTimeoutMS = config.getSendTimeoutMS();
+    }
 
     protected RateLimiter rateLimiter;
 
     protected long capacity;
 
-    protected int retries;
+    protected int sendTimeoutMS;
 
-    protected int timeoutMS;
+    protected final AQQueue aqQueue;
 
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -136,31 +152,11 @@ public class AQProducer {
         return aqQueue;
     }
 
-    public void setAqQueue(AQQueue aqQueue) {
-        this.aqQueue = aqQueue;
-    }
-
     public long getCapacity() {
         return capacity;
     }
 
     public void setCapacity(long capacity) {
         this.capacity = capacity;
-    }
-
-    public int getRetries() {
-        return retries;
-    }
-
-    public void setRetries(int retries) {
-        this.retries = retries;
-    }
-
-    public int getTimeoutMS() {
-        return timeoutMS;
-    }
-
-    public void setTimeoutMS(int timeoutMS) {
-        this.timeoutMS = timeoutMS;
     }
 }
