@@ -6,8 +6,8 @@ import com.google.common.util.concurrent.RateLimiter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.will.framework.aq.AQContext;
-import org.will.framework.aq.AQMessage;
+import org.will.framework.aq.common.AQContext;
+import org.will.framework.aq.common.AQMessage;
 import org.will.framework.aq.queue.AQQueue;
 import org.will.framework.util.ProtoStuffUtil;
 
@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.will.framework.aq.AQConstants.*;
+import static org.will.framework.aq.common.AQConstants.*;
 
 /**
  * Created with IntelliJ IDEA
@@ -28,21 +28,35 @@ import static org.will.framework.aq.AQConstants.*;
  */
 public abstract class AQConsumer<DT> {
 
-    protected final ConcurrentLinkedQueue<Long> elapseQueue = new ConcurrentLinkedQueue<>();
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    // 记录每个消息的处理执行时间 ms
+    protected final ConcurrentLinkedQueue<Long> elapseQueue = new ConcurrentLinkedQueue<>();
+
+    // 消息类型
     protected final String topic;
+    // worker 线程最大数
     protected final int maxWorkerThread;
+    // worker 线程最小数
     protected final int minWorkerThread;
-    protected final RateLimiter rateLimiter = RateLimiter.create(DEFAULT_QPS);
-    protected final ConcurrentMap<String, AQWorker> workerThreadMap = Maps.newConcurrentMap();
+    // 当前需要的线程数
     protected final AtomicInteger needWorkThreadAtoc = new AtomicInteger(0);
+    // 限速
+    protected final RateLimiter rateLimiter = RateLimiter.create(DEFAULT_QPS);
+    // 保存 worker 线程的池子
+    protected final ConcurrentMap<String, AQWorker> workerThreadMap = Maps.newConcurrentMap();
+    // watcher 的循环时间
     protected final int watcherCycleSec = 3;
-    protected AQWatcher aqWatcher = null;
-    protected AtomicInteger parallelCount = new AtomicInteger(0);
-    protected AtomicDouble elapseAvg = new AtomicDouble(0);
-    protected AtomicInteger qpsAvg = new AtomicInteger(0);
-    protected AQQueue aqQueue;
+    // 运行状态
     protected final AtomicInteger runStatus = new AtomicInteger(0);
+    // 监视器
+    protected AQWatcher aqWatcher = null;
+    // 每个消息处理的平均时间 ms
+    protected AtomicDouble elapseAvg = new AtomicDouble(0);
+    // qps
+    protected AtomicInteger qpsAvg = new AtomicInteger(0);
+    // 队列
+    protected AQQueue aqQueue;
 
     public AQConsumer(String topic, AQQueue aqQueue) {
         this.topic = topic;
@@ -66,25 +80,40 @@ public abstract class AQConsumer<DT> {
         loadAQWorkers();
     }
 
-    public void start(){
+    /**
+     * 开始消费
+     */
+    public void start() {
         runStatus.set(1);
 
         init();
     }
 
+    /**
+     * 停止消费
+     */
     public void stop() {
         runStatus.set(0);
 
-        while (aqWatcher != null && !aqWatcher.isInterrupted()) {
+        if (aqWatcher != null && aqWatcher.isInterrupted()) {
             aqWatcher.interrupt();
         }
-        aqWatcher = null;
 
         for (AQWorker aqWorker : workerThreadMap.values()) {
-            while (!aqWorker.isInterrupted()) {
+            if (aqWorker.isInterrupted()) {
                 aqWorker.interrupt();
             }
         }
+
+        while (aqWatcher.isAlive()) {
+            doSleep(200);
+        }
+
+        while (workerThreadMap.size() > 0) {
+            doSleep(200);
+        }
+
+        aqWatcher = null;
         workerThreadMap.clear();
     }
 
@@ -104,6 +133,9 @@ public abstract class AQConsumer<DT> {
         return null;
     }
 
+    /**
+     * wather 的实现
+     */
     public void schedule() {
         int real = 0;
         int parallel = computeParallelCount();
@@ -128,11 +160,19 @@ public abstract class AQConsumer<DT> {
         }
     }
 
-    public long size() {
+    /**
+     * 队列已使用长度
+     * @return
+     */
+    public synchronized long size() {
         return aqQueue.size(topic);
     }
 
-    public void acquire() {
+    /**
+     * 获取限速令牌
+     * @return
+     */
+    public synchronized void acquire() {
         rateLimiter.acquire();
     }
 
@@ -199,6 +239,19 @@ public abstract class AQConsumer<DT> {
         }
     }
 
+    protected AQWorker createAQWorker(String threadName) {
+        return new AQWorker(threadName, this) {
+            @Override
+            protected void processMessage(AQContext aqContext, Object data) {
+                logger.info("AQConsumer context:{}, data:{}", aqContext.toString(), data.toString());
+
+                doProcess(aqContext, (DT) data);
+            }
+        };
+    }
+
+    protected abstract void doProcess(AQContext aqContext, DT data);
+
     /**
      * 计算并行处理数
      *
@@ -234,17 +287,6 @@ public abstract class AQConsumer<DT> {
         }
         return new BigDecimal(parallel).intValue();
     }
-
-    protected AQWorker createAQWorker(String threadName) {
-        return new AQWorker(threadName, this) {
-            @Override
-            protected void processMessage(AQContext aqContext, Object data) {
-                doProcess(aqContext, (DT)data);
-            }
-        };
-    }
-
-    protected abstract void doProcess(AQContext aqContext, DT data);
 
     protected final void doSleep(long millis) {
         try {
@@ -294,10 +336,6 @@ public abstract class AQConsumer<DT> {
 
     public ConcurrentLinkedQueue<Long> getElapseQueue() {
         return elapseQueue;
-    }
-
-    public int getParallelCount() {
-        return parallelCount.get();
     }
 
     public int getQpsAvg() {

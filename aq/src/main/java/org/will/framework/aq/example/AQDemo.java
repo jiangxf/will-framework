@@ -2,7 +2,7 @@ package org.will.framework.aq.example;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.will.framework.aq.AQMessage;
+import org.will.framework.aq.common.AQMessage;
 import org.will.framework.aq.consumer.AQConsumer;
 import org.will.framework.aq.producer.AQProducer;
 import org.will.framework.aq.producer.AQProducerConfig;
@@ -31,17 +31,27 @@ public class AQDemo {
 
         final AQProducer aqProducer = new AQProducer(aqProducerConfig, aqQueue);
 
-        AQConsumer aqConsumer = new DemoAQConsumer(topic, 20, 0, aqQueue);
+        BookAQConsumer aqConsumer = new BookAQConsumer(topic, 20, 0, aqQueue);
         aqConsumer.start();
+
+        final BookInfo bookInfo = new BookInfo();
+        bookInfo.setAuthor("will");
+        bookInfo.setPrice(69.5);
+        bookInfo.setBookName("AQQueue从入门到放弃");
 
         new Thread(new Runnable() {
             @Override
             public void run() {
                 int idx = 0;
                 while (idx++ < 1000) {
-                    AQMessage aqMessage = new AQMessage(topic, aqProducerConfig);
-//                    aqMessage.setMessageId("msgId_" + idx);
-
+                    bookInfo.setId("BID" + idx);
+                    AQMessage aqMessage = new AQMessage(topic, bookInfo);
+                    if(idx % 2 == 0) {
+                        aqMessage.setSubType("add");
+                    }else{
+                        aqMessage.setSubType("update");
+                    }
+                    aqMessage.setAttachment("traceId", idx);
                     aqProducer.send(aqMessage);
 
                     try {
@@ -54,70 +64,16 @@ public class AQDemo {
             }
         }).start();
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                int idx = 0;
-                while (idx++ < 1000) {
-                    AQMessage aqMessage = new AQMessage(topic, logger);
-//                    aqMessage.setMessageId("msgId_" + idx);
+        while (true) {
+            aqConsumer.start();
 
-                    aqProducer.send(aqMessage);
-
-                    try {
-                        Thread.sleep(10);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
-                }
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-        }).start();
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                int idx = 0;
-                while (idx++ < 1000) {
-                    AQMessage aqMessage = new AQMessage(topic, logger);
-//                    aqMessage.setMessageId("msgId_" + idx);
-
-                    aqProducer.send(aqMessage);
-
-                    try {
-                        Thread.sleep(30);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-            }
-        }).start();
-
-        aqConsumer.start();
-
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            aqConsumer.stop();
         }
-
-        aqConsumer.stop();
-
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        aqConsumer.start();
-
-        try {
-            Thread.sleep(1000000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        aqConsumer.stop();
     }
 }

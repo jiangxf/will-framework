@@ -4,8 +4,7 @@ import com.google.common.util.concurrent.RateLimiter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.will.framework.aq.AQMessage;
-import org.will.framework.aq.exception.FullCapacityException;
+import org.will.framework.aq.common.AQMessage;
 import org.will.framework.aq.queue.AQQueue;
 import org.will.framework.util.IdWorker;
 import org.will.framework.util.ProtoStuffUtil;
@@ -37,6 +36,11 @@ public class AQProducer {
         this.aqQueue = aqQueue;
     }
 
+    /**
+     * 发送消息主方法
+     * @param aqMessage
+     * @return
+     */
     public String send(AQMessage aqMessage) {
 
         // 限流
@@ -83,9 +87,18 @@ public class AQProducer {
         }
     }
 
+    /**
+     * 检查并初始化消息
+     * @param aqMessage
+     * @return
+     */
     private String initAndCheckMessage(AQMessage aqMessage) {
         if (aqMessage == null || StringUtils.isEmpty(aqMessage.getTopic()) || aqMessage.getData() == null) {
             throw new IllegalArgumentException("消息类型与消息体不能为空!");
+        }
+
+        if(aqMessage.getSendTimestamp() <= 0) {
+            aqMessage.setSendTimestamp(System.currentTimeMillis());
         }
 
         if (StringUtils.isEmpty(aqMessage.getMessageId())) {
@@ -110,14 +123,11 @@ public class AQProducer {
         while (remainCapacity(aqMessage.getTopic()) <= 0) {
             if (totalWaitMS <= 0) {
                 logger.warn("队列已满，丢弃 {}", aqMessage.getMessageId());
-//                throw new FullCapacityException("队列容量不够，消息直接丢弃");
                 return;
             }
 
             doSleep(eachWaitMS);
             totalWaitMS -= eachWaitMS;
-
-            logger.warn("队列已满，等待 {}", aqMessage.getMessageId());
         }
 
         byte[] bytes = ProtoStuffUtil.serializer(aqMessage);
@@ -132,6 +142,10 @@ public class AQProducer {
         }
     }
 
+    /**
+     * 加载配置文件
+     * @param config
+     */
     private void loadConfig(AQProducerConfig config) {
         rateLimiter = RateLimiter.create(config.qps);
         capacity = config.getCapacity();

@@ -1,7 +1,7 @@
 package org.will.framework.aq.consumer;
 
-import org.will.framework.aq.AQContext;
-import org.will.framework.aq.AQMessage;
+import org.will.framework.aq.common.AQContext;
+import org.will.framework.aq.common.AQMessage;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -25,7 +25,7 @@ public abstract class AQWorker extends AQThread {
     }
 
     @Override
-    protected void doRun() throws InterruptedException{
+    protected void doRun() throws InterruptedException {
         long beginMillis = 0L;
         AQMessage aqMessage = null;
 
@@ -54,6 +54,11 @@ public abstract class AQWorker extends AQThread {
         this.aqConsumer.getWorkerThreadMap().remove(getName());
     }
 
+    /**
+     * 获取消息
+     * @return
+     * @throws InterruptedException
+     */
     protected AQMessage getMessage() throws InterruptedException {
         int tryCount = 0;
         while (aqConsumer.isRunning()) {
@@ -77,8 +82,17 @@ public abstract class AQWorker extends AQThread {
         return null;
     }
 
+    /**
+     * 消费消息
+     * @param aqContext
+     * @param data
+     */
     protected abstract void processMessage(AQContext aqContext, Object data);
 
+    /**
+     * 随机等待
+     * @throws InterruptedException
+     */
     protected void randomSleep() throws InterruptedException {
         sleep(millis + ThreadLocalRandom.current().nextInt(5) * 1000);
     }

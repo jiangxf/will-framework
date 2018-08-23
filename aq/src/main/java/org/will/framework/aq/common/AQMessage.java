@@ -1,4 +1,4 @@
-package org.will.framework.aq;
+package org.will.framework.aq.common;
 
 
 import com.google.common.collect.Maps;
@@ -11,18 +11,38 @@ import java.util.Map;
  */
 public class AQMessage implements Serializable, Cloneable {
 
+    // 消息主键
     private String messageId;
+
+    // 消息参数
     private Object data;
 
+    // 已经消费失败的次数
     private int curFailTime;
+
+    // 发送时间
     private long sendTimestamp;
+
+    // 过期时间
     private long offTimestamp;
+
+    // 附件，可以透传 traceId 等信息
     private Map<String, Object> attachments;
+
+    // 用于消息场景的细分
     private String subType;
+
+    // 消息分类
     private String topic;
 
     public AQMessage(String topic, Object data) {
         this.topic = topic;
+        this.data = data;
+    }
+
+    public AQMessage(String topic, String subType, Object data) {
+        this.topic = topic;
+        this.subType = subType;
         this.data = data;
     }
 

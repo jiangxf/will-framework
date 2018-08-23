@@ -1,6 +1,4 @@
-package org.will.framework.aq;
-
-import org.will.framework.aq.consumer.AQConsumer;
+package org.will.framework.aq.common;
 
 import java.util.Map;
 
@@ -13,12 +11,32 @@ import java.util.Map;
  */
 public class AQContext {
 
+    // 消息主键
     private String messageId;
+
+    // 已经消费失败的次数
     private int curFailTime;
+
+    // 附件，可以透传 traceId 等信息
     private Map<String, Object> attachments;
+
+    // 用于消息场景的细分
     private String subType;
+
+    // 消息分类
     private String topic;
+
+    // 发送时间
     private long sendTimestamp;
+
+    public AQContext(AQMessage aqMessage) {
+        this.setMessageId(aqMessage.getMessageId());
+        this.setTopic(aqMessage.getTopic());
+        this.setSubType(aqMessage.getSubType());
+        this.setAttachments(aqMessage.getAttachments());
+        this.setCurFailTime(aqMessage.getCurFailTime());
+        this.setSendTimestamp(aqMessage.getSendTimestamp());
+    }
 
     public String getMessageId() {
         return messageId;
@@ -68,12 +86,15 @@ public class AQContext {
         this.sendTimestamp = sendTimestamp;
     }
 
-    public AQContext(AQMessage aqMessage){
-        this.setMessageId(aqMessage.getMessageId());
-        this.setTopic(aqMessage.getTopic());
-        this.setSubType(aqMessage.getSubType());
-        this.setAttachments(aqMessage.getAttachments());
-        this.setCurFailTime(aqMessage.getCurFailTime());
-        this.setSendTimestamp(aqMessage.getSendTimestamp());
+    @Override
+    public String toString() {
+        return "AQContext{" +
+                "messageId='" + messageId + '\'' +
+                ", curFailTime=" + curFailTime +
+                ", attachments=" + attachments +
+                ", subType='" + subType + '\'' +
+                ", topic='" + topic + '\'' +
+                ", sendTimestamp=" + sendTimestamp +
+                '}';
     }
 }

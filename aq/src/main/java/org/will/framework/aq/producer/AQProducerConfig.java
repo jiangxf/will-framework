@@ -1,6 +1,6 @@
 package org.will.framework.aq.producer;
 
-import static org.will.framework.aq.AQConstants.*;
+import static org.will.framework.aq.common.AQConstants.*;
 
 /**
  * Created with IntelliJ IDEA
@@ -60,5 +60,14 @@ public class AQProducerConfig {
 
     public void setQps(double qps) {
         this.qps = qps;
+    }
+
+    @Override
+    public String toString() {
+        return "AQProducerConfig{" +
+                "capacity=" + capacity +
+                ", sendTimeoutMS=" + sendTimeoutMS +
+                ", qps=" + qps +
+                '}';
     }
 }

@@ -1,9 +1,9 @@
 package org.will.framework.aq.queue;
 
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
-import static org.will.framework.aq.AQConstants.DEFAULT_CAPACITY;
+import static org.will.framework.aq.common.AQConstants.DEFAULT_CAPACITY;
 
 /**
  * Created with IntelliJ IDEA
@@ -14,7 +14,7 @@ import static org.will.framework.aq.AQConstants.DEFAULT_CAPACITY;
  */
 public class LocalAQQueue implements AQQueue {
 
-    private static final ConcurrentHashMap<String, ConcurrentLinkedQueue<byte[]>> LOCAL_QUEUE_MAP = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, LinkedBlockingQueue<byte[]>> LOCAL_QUEUE_MAP = new ConcurrentHashMap<>();
 
     @Override
     public void enqueue(String topic, byte[] message) {
@@ -28,7 +28,7 @@ public class LocalAQQueue implements AQQueue {
 
     @Override
     public long size(String topic) {
-        return DEFAULT_CAPACITY - getQueue(topic).size();
+        return getQueue(topic).size();
     }
 
     @Override
@@ -37,13 +37,13 @@ public class LocalAQQueue implements AQQueue {
         return true;
     }
 
-    private ConcurrentLinkedQueue<byte[]> getQueue(String topic) {
-        ConcurrentLinkedQueue queue = LOCAL_QUEUE_MAP.get(topic);
+    private LinkedBlockingQueue<byte[]> getQueue(String topic) {
+        LinkedBlockingQueue queue = LOCAL_QUEUE_MAP.get(topic);
         if (queue == null) {
             synchronized (LocalAQQueue.class.getName() + topic) {
                 queue = LOCAL_QUEUE_MAP.get(topic);
                 if (queue == null) {
-                    queue = new ConcurrentLinkedQueue();
+                    queue = new LinkedBlockingQueue(DEFAULT_CAPACITY);
                     LOCAL_QUEUE_MAP.put(topic, queue);
                 }
             }

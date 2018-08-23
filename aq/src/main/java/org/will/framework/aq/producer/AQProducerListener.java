@@ -1,6 +1,6 @@
 package org.will.framework.aq.producer;
 
-import org.will.framework.aq.AQMessage;
+import org.will.framework.aq.common.AQMessage;
 
 /**
  * Created with IntelliJ IDEA
