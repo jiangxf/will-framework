@@ -6,6 +6,7 @@ import com.google.common.util.concurrent.RateLimiter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.will.framework.aq.AQContext;
 import org.will.framework.aq.AQMessage;
 import org.will.framework.aq.queue.AQQueue;
 import org.will.framework.util.ProtoStuffUtil;
@@ -25,7 +26,7 @@ import static org.will.framework.aq.AQConstants.*;
  * Date: 2018-07-17
  * Time: 21:01
  */
-public abstract class AQConsumer {
+public abstract class AQConsumer<DT> {
 
     protected final ConcurrentLinkedQueue<Long> elapseQueue = new ConcurrentLinkedQueue<>();
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -41,6 +42,7 @@ public abstract class AQConsumer {
     protected AtomicDouble elapseAvg = new AtomicDouble(0);
     protected AtomicInteger qpsAvg = new AtomicInteger(0);
     protected AQQueue aqQueue;
+    protected final AtomicInteger runStatus = new AtomicInteger(0);
 
     public AQConsumer(String topic, AQQueue aqQueue) {
         this.topic = topic;
@@ -59,9 +61,31 @@ public abstract class AQConsumer {
     /**
      * 初始化参数
      */
-    public void init() {
+    protected void init() {
         loadAQWatcher();
         loadAQWorkers();
+    }
+
+    public void start(){
+        runStatus.set(1);
+
+        init();
+    }
+
+    public void stop() {
+        runStatus.set(0);
+
+        while (aqWatcher != null && !aqWatcher.isInterrupted()) {
+            aqWatcher.interrupt();
+        }
+        aqWatcher = null;
+
+        for (AQWorker aqWorker : workerThreadMap.values()) {
+            while (!aqWorker.isInterrupted()) {
+                aqWorker.interrupt();
+            }
+        }
+        workerThreadMap.clear();
     }
 
     /**
@@ -116,6 +140,11 @@ public abstract class AQConsumer {
      * 创建守护线程
      */
     protected final synchronized void loadAQWatcher() {
+
+        if (runStatus.get() == 0) {
+            return;
+        }
+
         if (StringUtils.isEmpty(topic)) {
             throw new IllegalArgumentException("type 不能为空");
         }
@@ -131,6 +160,11 @@ public abstract class AQConsumer {
      * 创建消费处理线程组
      */
     protected final synchronized void loadAQWorkers() {
+
+        if (runStatus.get() == 0) {
+            return;
+        }
+
         // todo: 参数校验考虑放在合适的位置
         if (StringUtils.isEmpty(topic)) {
             throw new IllegalArgumentException("topic 不能为空");
@@ -161,16 +195,6 @@ public abstract class AQConsumer {
             startAQWorker(threadName);
             if (--newNeed <= 0) {
                 break;
-            }
-        }
-    }
-
-    public void close() {
-        // 移除已消亡的工作线程
-        Set<String> keySet = workerThreadMap.keySet();
-        for (String name : keySet) {
-            if (!workerThreadMap.get(name).isInterrupted()) {
-                workerThreadMap.get(name).interrupt();
             }
         }
     }
@@ -214,13 +238,13 @@ public abstract class AQConsumer {
     protected AQWorker createAQWorker(String threadName) {
         return new AQWorker(threadName, this) {
             @Override
-            protected void processMessage(AQMessage aqMessage) {
-                doProcessMessage(aqMessage);
+            protected void processMessage(AQContext aqContext, Object data) {
+                doProcess(aqContext, (DT)data);
             }
         };
     }
 
-    protected abstract void doProcessMessage(AQMessage aqRequest);
+    protected abstract void doProcess(AQContext aqContext, DT data);
 
     protected final void doSleep(long millis) {
         try {
@@ -290,5 +314,9 @@ public abstract class AQConsumer {
 
     public long getElapseAvg() {
         return Math.round((double) elapseAvg.get());
+    }
+
+    public boolean isRunning() {
+        return runStatus.get() > 0;
     }
 }

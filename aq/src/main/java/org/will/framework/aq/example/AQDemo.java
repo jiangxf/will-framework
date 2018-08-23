@@ -26,20 +26,20 @@ public class AQDemo {
 
         AQQueue aqQueue = new LocalAQQueue();
 
-        AQProducerConfig aqProducerConfig = new AQProducerConfig();
-        aqProducerConfig.setCapacity(10);
+        final AQProducerConfig aqProducerConfig = new AQProducerConfig();
+        aqProducerConfig.setCapacity(100);
 
         final AQProducer aqProducer = new AQProducer(aqProducerConfig, aqQueue);
 
         AQConsumer aqConsumer = new DemoAQConsumer(topic, 20, 0, aqQueue);
-        aqConsumer.init();
+        aqConsumer.start();
 
         new Thread(new Runnable() {
             @Override
             public void run() {
                 int idx = 0;
                 while (idx++ < 1000) {
-                    AQMessage aqMessage = new AQMessage(topic, logger);
+                    AQMessage aqMessage = new AQMessage(topic, aqProducerConfig);
 //                    aqMessage.setMessageId("msgId_" + idx);
 
                     aqProducer.send(aqMessage);
@@ -94,10 +94,30 @@ public class AQDemo {
             }
         }).start();
 
+        aqConsumer.start();
+
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        aqConsumer.stop();
+
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        aqConsumer.start();
+
         try {
             Thread.sleep(1000000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+        aqConsumer.stop();
     }
 }

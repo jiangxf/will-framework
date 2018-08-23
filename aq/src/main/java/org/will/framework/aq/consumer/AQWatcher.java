@@ -18,7 +18,7 @@ public class AQWatcher extends AQThread {
 
     @Override
     protected void doRun() throws InterruptedException {
-        while (!isInterrupted()) {
+        while (aqConsumer.isRunning()) {
             aqConsumer.schedule();
             sleep(aqConsumer.getWatcherCycleSec() * 1000);
         }

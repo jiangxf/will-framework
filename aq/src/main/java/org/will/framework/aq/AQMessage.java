@@ -9,20 +9,19 @@ import java.util.Map;
 /**
  * Created by will on 03/04/2017.
  */
-public class AQMessage<DATA_TYPE> implements Serializable, Cloneable {
+public class AQMessage implements Serializable, Cloneable {
 
     private String messageId;
-    private DATA_TYPE data;
+    private Object data;
 
-    //    // 处理失败后的重试次数，移到 AQConsumerConfig 中
-//    private int failTime;
     private int curFailTime;
-    private long timestamp;
+    private long sendTimestamp;
+    private long offTimestamp;
     private Map<String, Object> attachments;
     private String subType;
     private String topic;
 
-    public AQMessage(String topic, DATA_TYPE data) {
+    public AQMessage(String topic, Object data) {
         this.topic = topic;
         this.data = data;
     }
@@ -88,11 +87,11 @@ public class AQMessage<DATA_TYPE> implements Serializable, Cloneable {
         this.messageId = messageId;
     }
 
-    public DATA_TYPE getData() {
+    public Object getData() {
         return data;
     }
 
-    public void setData(DATA_TYPE data) {
+    public void setData(Object data) {
         this.data = data;
     }
 
@@ -104,12 +103,20 @@ public class AQMessage<DATA_TYPE> implements Serializable, Cloneable {
         this.curFailTime = curFailTime;
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public long getSendTimestamp() {
+        return sendTimestamp;
     }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
+    public void setSendTimestamp(long sendTimestamp) {
+        this.sendTimestamp = sendTimestamp;
+    }
+
+    public long getOffTimestamp() {
+        return offTimestamp;
+    }
+
+    public void setOffTimestamp(long offTimestamp) {
+        this.offTimestamp = offTimestamp;
     }
 
     public String getTopic() {
@@ -126,7 +133,8 @@ public class AQMessage<DATA_TYPE> implements Serializable, Cloneable {
                 "messageId='" + messageId + '\'' +
                 ", data=" + data +
                 ", curFailTime=" + curFailTime +
-                ", timestamp=" + timestamp +
+                ", sendTimestamp=" + sendTimestamp +
+                ", offTimestamp=" + offTimestamp +
                 ", attachments=" + attachments +
                 ", subType='" + subType + '\'' +
                 ", topic='" + topic + '\'' +

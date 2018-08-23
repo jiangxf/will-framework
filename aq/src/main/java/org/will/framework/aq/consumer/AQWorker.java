@@ -1,5 +1,6 @@
 package org.will.framework.aq.consumer;
 
+import org.will.framework.aq.AQContext;
 import org.will.framework.aq.AQMessage;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -28,7 +29,7 @@ public abstract class AQWorker extends AQThread {
         long beginMillis = 0L;
         AQMessage aqMessage = null;
 
-        while (!isInterrupted()) {
+        while (aqConsumer.isRunning()) {
             aqConsumer.acquire();
 
             // 从消息队列中取数据
@@ -40,7 +41,7 @@ public abstract class AQWorker extends AQThread {
             beginMillis = System.currentTimeMillis();
 
             // 处理请求
-            processMessage(aqMessage);
+            processMessage(new AQContext(aqMessage), aqMessage.getData());
 
             // 统计当前处理的请求执行时间
             long interval = System.currentTimeMillis() - beginMillis;
@@ -55,7 +56,7 @@ public abstract class AQWorker extends AQThread {
 
     protected AQMessage getMessage() throws InterruptedException {
         int tryCount = 0;
-        while (true) {
+        while (aqConsumer.isRunning()) {
             AQMessage aqMessage = aqConsumer.recv();
             if (aqMessage == null) {
                 if (++tryCount >= 2) {
@@ -73,9 +74,10 @@ public abstract class AQWorker extends AQThread {
                 return aqMessage;
             }
         }
+        return null;
     }
 
-    protected abstract void processMessage(AQMessage aqRequest);
+    protected abstract void processMessage(AQContext aqContext, Object data);
 
     protected void randomSleep() throws InterruptedException {
         sleep(millis + ThreadLocalRandom.current().nextInt(5) * 1000);

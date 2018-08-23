@@ -79,6 +79,7 @@ public class AQProducer {
         try {
             Thread.sleep(millis);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -108,7 +109,9 @@ public class AQProducer {
         int totalWaitMS = sendTimeoutMS;
         while (remainCapacity(aqMessage.getTopic()) <= 0) {
             if (totalWaitMS <= 0) {
-                throw new FullCapacityException("消息发送失败，队列容量不够");
+                logger.warn("队列已满，丢弃 {}", aqMessage.getMessageId());
+//                throw new FullCapacityException("队列容量不够，消息直接丢弃");
+                return;
             }
 
             doSleep(eachWaitMS);
