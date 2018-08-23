@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AQThread extends Thread {
 
+    protected Logger logger = LoggerFactory.getLogger(this.getClass());
+
     public AQThread(String threadName) {
         super(threadName);
     }
@@ -33,17 +35,8 @@ public abstract class AQThread extends Thread {
     protected void doBefore() {
     }
 
-    protected abstract void doRun();
+    protected abstract void doRun() throws InterruptedException;
 
     protected void doFinish(Exception ex) {
     }
-
-    protected final void doSleep(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException e) {
-        }
-    }
-
-    protected Logger logger = LoggerFactory.getLogger(this.getClass());
 }

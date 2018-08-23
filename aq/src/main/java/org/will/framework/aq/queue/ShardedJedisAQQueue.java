@@ -11,6 +11,8 @@ import redis.clients.jedis.ShardedJedis;
  */
 public class ShardedJedisAQQueue implements AQQueue {
 
+    ShardedJedis jedis;
+
     public ShardedJedisAQQueue(ShardedJedis jedis) {
         this.jedis = jedis;
     }
@@ -34,6 +36,4 @@ public class ShardedJedisAQQueue implements AQQueue {
     public boolean clear(String topic) {
         return jedis.del(topic) > 0;
     }
-
-    ShardedJedis jedis;
 }

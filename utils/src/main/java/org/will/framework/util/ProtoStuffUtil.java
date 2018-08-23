@@ -18,6 +18,13 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ProtoStuffUtil {
 
+    private static Logger logger = LoggerFactory.getLogger(ProtoStuffUtil.class);
+    private static Map<Class<?>, Schema<?>> cachedSchema = new ConcurrentHashMap<Class<?>, Schema<?>>();
+    private static Objenesis objenesis = new ObjenesisStd(true);
+
+    private ProtoStuffUtil() {
+    }
+
     @SuppressWarnings("unchecked")
     public static <T> byte[] serializer(T obj) {
         Class<T> cls = (Class<T>) obj.getClass();
@@ -54,15 +61,6 @@ public class ProtoStuffUtil {
         }
         return schema;
     }
-
-    private ProtoStuffUtil() {
-    }
-
-    private static Logger logger = LoggerFactory.getLogger(ProtoStuffUtil.class);
-
-    private static Map<Class<?>, Schema<?>> cachedSchema = new ConcurrentHashMap<Class<?>, Schema<?>>();
-
-    private static Objenesis objenesis = new ObjenesisStd(true);
 
     public static void main(String[] args) {
 

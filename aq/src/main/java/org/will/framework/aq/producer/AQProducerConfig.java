@@ -1,8 +1,6 @@
 package org.will.framework.aq.producer;
 
-import static org.will.framework.aq.AQConstants.DEFAULT_CAPACITY;
-import static org.will.framework.aq.AQConstants.DEFAULT_QPS;
-import static org.will.framework.aq.AQConstants.DEFAULT_TIMEOUT_MS;
+import static org.will.framework.aq.AQConstants.*;
 
 /**
  * Created with IntelliJ IDEA

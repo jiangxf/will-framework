@@ -1,7 +1,6 @@
 package org.will.framework.aq.consumer;
 
 import org.will.framework.aq.AQMessage;
-import org.will.framework.aq.exception.EmptyQueueException;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -15,6 +14,8 @@ import java.util.concurrent.ThreadLocalRandom;
 public abstract class AQWorker extends AQThread {
 
     public static final int DEFAULT_TIMEOUT_MS = 3000;
+    protected final AQConsumer aqConsumer;
+    protected final int millis;
 
     public AQWorker(String threadName, AQConsumer aqConsumer) {
         super(threadName);
@@ -23,11 +24,11 @@ public abstract class AQWorker extends AQThread {
     }
 
     @Override
-    protected void doRun() {
+    protected void doRun() throws InterruptedException{
         long beginMillis = 0L;
         AQMessage aqMessage = null;
 
-        while (true) {
+        while (!isInterrupted()) {
             aqConsumer.acquire();
 
             // 从消息队列中取数据
@@ -52,17 +53,7 @@ public abstract class AQWorker extends AQThread {
         this.aqConsumer.getWorkerThreadMap().remove(getName());
     }
 
-    protected abstract void processMessage(AQMessage aqRequest);
-
-    protected void randomSleep() {
-        doSleep(millis + ThreadLocalRandom.current().nextInt(5) * 1000);
-    }
-
-    protected final AQConsumer aqConsumer;
-
-    protected final int millis;
-
-    protected AQMessage getMessage() throws EmptyQueueException {
+    protected AQMessage getMessage() throws InterruptedException {
         int tryCount = 0;
         while (true) {
             AQMessage aqMessage = aqConsumer.recv();
@@ -73,7 +64,7 @@ public abstract class AQWorker extends AQThread {
                         randomSleep();
                         continue;
                     }
-                    return aqMessage;
+                    return null;
                 } else {
                     randomSleep();
                     continue;
@@ -82,5 +73,11 @@ public abstract class AQWorker extends AQThread {
                 return aqMessage;
             }
         }
+    }
+
+    protected abstract void processMessage(AQMessage aqRequest);
+
+    protected void randomSleep() throws InterruptedException {
+        sleep(millis + ThreadLocalRandom.current().nextInt(5) * 1000);
     }
 }

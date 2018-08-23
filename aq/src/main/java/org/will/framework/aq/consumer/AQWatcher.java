@@ -9,18 +9,18 @@ package org.will.framework.aq.consumer;
  */
 public class AQWatcher extends AQThread {
 
+    protected final AQConsumer aqConsumer;
+
     public AQWatcher(String threadName, AQConsumer aqConsumer) {
         super(threadName);
         this.aqConsumer = aqConsumer;
     }
 
     @Override
-    protected void doRun() {
-        while (true) {
+    protected void doRun() throws InterruptedException {
+        while (!isInterrupted()) {
             aqConsumer.schedule();
-            doSleep(aqConsumer.getWatcherCycleSec() * 1000);
+            sleep(aqConsumer.getWatcherCycleSec() * 1000);
         }
     }
-
-    protected final AQConsumer aqConsumer;
 }

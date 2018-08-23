@@ -11,6 +11,17 @@ import java.util.Map;
  */
 public class AQMessage<DATA_TYPE> implements Serializable, Cloneable {
 
+    private String messageId;
+    private DATA_TYPE data;
+
+    //    // 处理失败后的重试次数，移到 AQConsumerConfig 中
+//    private int failTime;
+    private int curFailTime;
+    private long timestamp;
+    private Map<String, Object> attachments;
+    private String subType;
+    private String topic;
+
     public AQMessage(String topic, DATA_TYPE data) {
         this.topic = topic;
         this.data = data;
@@ -23,9 +34,6 @@ public class AQMessage<DATA_TYPE> implements Serializable, Cloneable {
 
         this.attachments.put(key, value);
     }
-
-//    // 处理失败后的重试次数，移到 AQConsumerConfig 中
-//    private int failTime;
 
     public Object setAttachmentIfNotExist(String key, Object value) {
         if (attachments == null) {
@@ -55,20 +63,6 @@ public class AQMessage<DATA_TYPE> implements Serializable, Cloneable {
 
         return this.attachments.containsKey(key);
     }
-
-    private String messageId;
-
-    private DATA_TYPE data;
-
-    private int curFailTime;
-
-    private long timestamp;
-
-    private Map<String, Object> attachments;
-
-    private String subType;
-
-    private String topic;
 
     public Map<String, Object> getAttachments() {
         return attachments;

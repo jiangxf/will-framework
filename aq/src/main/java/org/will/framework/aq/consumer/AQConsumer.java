@@ -16,9 +16,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.will.framework.aq.AQConstants.DEFAULT_QPS;
-import static org.will.framework.aq.AQConstants.MAX_WORKER_THREAD;
-import static org.will.framework.aq.AQConstants.MIN_WORKER_THREAD;
+import static org.will.framework.aq.AQConstants.*;
 
 /**
  * Created with IntelliJ IDEA
@@ -28,6 +26,21 @@ import static org.will.framework.aq.AQConstants.MIN_WORKER_THREAD;
  * Time: 21:01
  */
 public abstract class AQConsumer {
+
+    protected final ConcurrentLinkedQueue<Long> elapseQueue = new ConcurrentLinkedQueue<>();
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected final String topic;
+    protected final int maxWorkerThread;
+    protected final int minWorkerThread;
+    protected final RateLimiter rateLimiter = RateLimiter.create(DEFAULT_QPS);
+    protected final ConcurrentMap<String, AQWorker> workerThreadMap = Maps.newConcurrentMap();
+    protected final AtomicInteger needWorkThreadAtoc = new AtomicInteger(0);
+    protected final int watcherCycleSec = 3;
+    protected AQWatcher aqWatcher = null;
+    protected AtomicInteger parallelCount = new AtomicInteger(0);
+    protected AtomicDouble elapseAvg = new AtomicDouble(0);
+    protected AtomicInteger qpsAvg = new AtomicInteger(0);
+    protected AQQueue aqQueue;
 
     public AQConsumer(String topic, AQQueue aqQueue) {
         this.topic = topic;
@@ -152,6 +165,16 @@ public abstract class AQConsumer {
         }
     }
 
+    public void close() {
+        // 移除已消亡的工作线程
+        Set<String> keySet = workerThreadMap.keySet();
+        for (String name : keySet) {
+            if (!workerThreadMap.get(name).isInterrupted()) {
+                workerThreadMap.get(name).interrupt();
+            }
+        }
+    }
+
     /**
      * 计算并行处理数
      *
@@ -212,34 +235,6 @@ public abstract class AQConsumer {
 
         aqWorker.start();
     }
-
-    protected AQWatcher aqWatcher = null;
-
-    protected AtomicInteger parallelCount = new AtomicInteger(0);
-
-    protected AtomicDouble elapseAvg = new AtomicDouble(0);
-
-    protected AtomicInteger qpsAvg = new AtomicInteger(0);
-
-    protected AQQueue aqQueue;
-
-    protected final ConcurrentLinkedQueue<Long> elapseQueue = new ConcurrentLinkedQueue<>();
-
-    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    protected final String topic;
-
-    protected final int maxWorkerThread;
-
-    protected final int minWorkerThread;
-
-    protected final RateLimiter rateLimiter = RateLimiter.create(DEFAULT_QPS);
-
-    protected final ConcurrentMap<String, AQWorker> workerThreadMap = Maps.newConcurrentMap();
-
-    protected final AtomicInteger needWorkThreadAtoc = new AtomicInteger(0);
-
-    protected final int watcherCycleSec = 3;
 
     public AQQueue getAqQueue() {
         return aqQueue;

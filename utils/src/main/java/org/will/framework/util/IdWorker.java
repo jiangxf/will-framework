@@ -36,6 +36,84 @@ import java.util.UUID;
  */
 public class IdWorker {
 
+    /**
+     * 滤波器,使时间变小,生成的总位数变小,一旦确定不能变动
+     */
+    private final static long twepoch = 1361753741828L;
+    private final static long workerIdBits = 10L;
+    private final static long maxWorkerId = -1L ^ -1L << workerIdBits;
+    private final static long sequenceBits = 12L;
+    private final static long workerIdShift = sequenceBits;
+    private final static long timestampLeftShift = sequenceBits + workerIdBits;
+    private final static long sequenceMask = -1L ^ -1L << sequenceBits;
+    private static final Logger logger = LoggerFactory.getLogger(IdWorker.class);
+    /**
+     * 主机和进程的机器码
+     */
+    private static final int _genmachine;
+    /**
+     * 主机和进程的机器码
+     */
+    private static IdWorker worker = new IdWorker();
+
+    static {
+        try {
+            // build a 2-byte machine piece based on NICs info
+            int machinePiece;
+            {
+                try {
+                    StringBuilder sb = new StringBuilder();
+                    Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces();
+                    while (e.hasMoreElements()) {
+                        NetworkInterface ni = e.nextElement();
+                        sb.append(ni.toString());
+                    }
+                    machinePiece = sb.toString().hashCode() << 16;
+                } catch (Throwable e) {
+                    // exception sometimes happens with IBM JVM, use random
+                    logger.error(" IdWorker error. ", e);
+                    machinePiece = new Random().nextInt() << 16;
+                }
+                logger.debug("machine piece post: " + Integer.toHexString(machinePiece));
+            }
+            // add a 2 byte process piece. It must represent not only the JVM
+            // but the class loader.
+            // Since static var belong to class loader there could be collisions
+            // otherwise
+            final int processPiece;
+            {
+                int processId = new Random().nextInt();
+                try {
+                    processId = java.lang.management.ManagementFactory.getRuntimeMXBean().getName().hashCode();
+                } catch (Throwable t) {
+                }
+                ClassLoader loader = IdWorker.class.getClassLoader();
+                int loaderId = loader != null ? System.identityHashCode(loader) : 0;
+                StringBuilder sb = new StringBuilder();
+                sb.append(Integer.toHexString(processId));
+                sb.append(Integer.toHexString(loaderId));
+                processPiece = sb.toString().hashCode() & 0xFFFF;
+                logger.debug("process piece: " + Integer.toHexString(processPiece));
+            }
+            _genmachine = machinePiece | processPiece;
+            logger.debug("machine : " + Integer.toHexString(_genmachine));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 根据具体机器环境提供
+     */
+    private final long workerId;
+    //protected Logger logger = LoggerFactory.getLogger(this.getClass());
+    private long sequence = 0L;
+    private long lastTimestamp = -1L;
+
+    private IdWorker() {
+        workerId = _genmachine % (IdWorker.maxWorkerId + 1);
+    }
+
     public static Long getId() {
         return worker.nextId();
     }
@@ -84,94 +162,5 @@ public class IdWorker {
 
     private long timeGen() {
         return System.currentTimeMillis();
-    }
-
-    private IdWorker() {
-        workerId = _genmachine % (IdWorker.maxWorkerId + 1);
-    }
-
-    //protected Logger logger = LoggerFactory.getLogger(this.getClass());
-    private long sequence = 0L;
-
-    private long lastTimestamp = -1L;
-
-    /**
-     * 根据具体机器环境提供
-     */
-    private final long workerId;
-
-    /**
-     * 主机和进程的机器码
-     */
-    private static IdWorker worker = new IdWorker();
-
-    /**
-     * 滤波器,使时间变小,生成的总位数变小,一旦确定不能变动
-     */
-    private final static long twepoch = 1361753741828L;
-
-    private final static long workerIdBits = 10L;
-
-    private final static long maxWorkerId = -1L ^ -1L << workerIdBits;
-
-    private final static long sequenceBits = 12L;
-
-    private final static long workerIdShift = sequenceBits;
-
-    private final static long timestampLeftShift = sequenceBits + workerIdBits;
-
-    private final static long sequenceMask = -1L ^ -1L << sequenceBits;
-
-    private static final Logger logger = LoggerFactory.getLogger(IdWorker.class);
-
-    /**
-     * 主机和进程的机器码
-     */
-    private static final int _genmachine;
-
-    static {
-        try {
-            // build a 2-byte machine piece based on NICs info
-            int machinePiece;
-            {
-                try {
-                    StringBuilder sb = new StringBuilder();
-                    Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces();
-                    while (e.hasMoreElements()) {
-                        NetworkInterface ni = e.nextElement();
-                        sb.append(ni.toString());
-                    }
-                    machinePiece = sb.toString().hashCode() << 16;
-                } catch (Throwable e) {
-                    // exception sometimes happens with IBM JVM, use random
-                    logger.error(" IdWorker error. ", e);
-                    machinePiece = new Random().nextInt() << 16;
-                }
-                logger.debug("machine piece post: " + Integer.toHexString(machinePiece));
-            }
-            // add a 2 byte process piece. It must represent not only the JVM
-            // but the class loader.
-            // Since static var belong to class loader there could be collisions
-            // otherwise
-            final int processPiece;
-            {
-                int processId = new Random().nextInt();
-                try {
-                    processId = java.lang.management.ManagementFactory.getRuntimeMXBean().getName().hashCode();
-                } catch (Throwable t) {
-                }
-                ClassLoader loader = IdWorker.class.getClassLoader();
-                int loaderId = loader != null ? System.identityHashCode(loader) : 0;
-                StringBuilder sb = new StringBuilder();
-                sb.append(Integer.toHexString(processId));
-                sb.append(Integer.toHexString(loaderId));
-                processPiece = sb.toString().hashCode() & 0xFFFF;
-                logger.debug("process piece: " + Integer.toHexString(processPiece));
-            }
-            _genmachine = machinePiece | processPiece;
-            logger.debug("machine : " + Integer.toHexString(_genmachine));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 }

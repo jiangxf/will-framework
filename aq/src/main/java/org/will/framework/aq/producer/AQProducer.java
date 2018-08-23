@@ -21,6 +21,13 @@ import java.util.List;
  */
 public class AQProducer {
 
+    protected final AQQueue aqQueue;
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected RateLimiter rateLimiter;
+    protected long capacity;
+    protected int sendTimeoutMS;
+    private List<AQProducerListener> producerListeners;
+
     public AQProducer(AQQueue aqQueue) {
         this(new AQProducerConfig(), aqQueue);
     }
@@ -127,18 +134,6 @@ public class AQProducer {
         capacity = config.getCapacity();
         sendTimeoutMS = config.getSendTimeoutMS();
     }
-
-    protected RateLimiter rateLimiter;
-
-    protected long capacity;
-
-    protected int sendTimeoutMS;
-
-    protected final AQQueue aqQueue;
-
-    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    private List<AQProducerListener> producerListeners;
 
     public List<AQProducerListener> getProducerListeners() {
         return producerListeners;
