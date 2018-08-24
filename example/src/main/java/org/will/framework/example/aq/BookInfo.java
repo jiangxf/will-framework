@@ -1,4 +1,4 @@
-package org.will.framework.aq.example;
+package org.will.framework.example.aq;
 
 /**
  * Created with IntelliJ IDEA

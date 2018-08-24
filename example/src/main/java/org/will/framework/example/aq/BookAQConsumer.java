@@ -1,11 +1,8 @@
-package org.will.framework.aq.example;
+package org.will.framework.example.aq;
 
 import org.will.framework.aq.common.AQContext;
 import org.will.framework.aq.consumer.AQConsumer;
-import org.will.framework.aq.producer.AQProducerConfig;
 import org.will.framework.aq.queue.AQQueue;
-
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Created with IntelliJ IDEA
@@ -33,11 +30,11 @@ public class BookAQConsumer extends AQConsumer<BookInfo> {
 
     private void saveBookInfo(BookInfo data) {
         logger.info("保存书籍");
-        doSleep(ThreadLocalRandom.current().nextLong(100));
+//        doSleep(ThreadLocalRandom.current().nextLong(100));
     }
 
     private void updateBookInfo(BookInfo data) {
         logger.info("修改书籍");
-        doSleep(ThreadLocalRandom.current().nextLong(200));
+//        doSleep(ThreadLocalRandom.current().nextLong(200));
     }
 }

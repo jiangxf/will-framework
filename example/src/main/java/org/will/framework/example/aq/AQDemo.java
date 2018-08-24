@@ -1,13 +1,14 @@
-package org.will.framework.aq.example;
+package org.will.framework.example.aq;
 
+import com.qunar.redis.storage.Sedis;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.will.framework.aq.common.AQMessage;
-import org.will.framework.aq.consumer.AQConsumer;
 import org.will.framework.aq.producer.AQProducer;
 import org.will.framework.aq.producer.AQProducerConfig;
 import org.will.framework.aq.queue.AQQueue;
 import org.will.framework.aq.queue.LocalAQQueue;
+import org.will.framework.aq.queue.SedisAQQueue;
 
 /**
  * Created with IntelliJ IDEA
@@ -20,19 +21,22 @@ public class AQDemo {
 
     protected final static Logger logger = LoggerFactory.getLogger(AQDemo.class);
 
+    private static String topic = "TEST";
+    private static AQQueue aqQueue = new LocalAQQueue();
+
     public static void main(String[] args) {
+//        aqQueue = new LocalAQQueue();
 
-        final String topic = "TEST";
+        aqQueue = new SedisAQQueue(new Sedis("pay_ious_beta", "be1e8df1", "10.86.36.159:2181,10.86.36.176:2181,10.86.36.231:2181,10.86.37.227:2181,10.86.37.202:2181"));
+        testProducer(aqQueue);
+        testConsumer(aqQueue);
+    }
 
-        AQQueue aqQueue = new LocalAQQueue();
-
+    private static void testProducer(AQQueue aqQueue) {
         final AQProducerConfig aqProducerConfig = new AQProducerConfig();
         aqProducerConfig.setCapacity(100);
 
         final AQProducer aqProducer = new AQProducer(aqProducerConfig, aqQueue);
-
-        BookAQConsumer aqConsumer = new BookAQConsumer(topic, 20, 0, aqQueue);
-        aqConsumer.start();
 
         final BookInfo bookInfo = new BookInfo();
         bookInfo.setAuthor("will");
@@ -43,12 +47,12 @@ public class AQDemo {
             @Override
             public void run() {
                 int idx = 0;
-                while (idx++ < 1000) {
+                while (idx++ < 10) {
                     bookInfo.setId("BID" + idx);
                     AQMessage aqMessage = new AQMessage(topic, bookInfo);
-                    if(idx % 2 == 0) {
+                    if (idx % 2 == 0) {
                         aqMessage.setSubType("add");
-                    }else{
+                    } else {
                         aqMessage.setSubType("update");
                     }
                     aqMessage.setAttachment("traceId", idx);
@@ -63,7 +67,10 @@ public class AQDemo {
                 }
             }
         }).start();
+    }
 
+    private static void testConsumer(AQQueue aqQueue) {
+        BookAQConsumer aqConsumer = new BookAQConsumer(topic, 20, 0, aqQueue);
         while (true) {
             aqConsumer.start();
 

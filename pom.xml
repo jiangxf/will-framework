@@ -13,6 +13,7 @@
         <module>aq</module>
         <module>all</module>
         <module>dlock</module>
+        <module>example</module>
     </modules>
 
     <properties>

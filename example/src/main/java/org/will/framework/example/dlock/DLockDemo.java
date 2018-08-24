@@ -1,4 +1,4 @@
-package org.will.framework.dlock.example;
+package org.will.framework.example.dlock;
 
 import com.qunar.redis.storage.Sedis;
 import org.apache.curator.RetryPolicy;
@@ -23,23 +23,22 @@ public class DLockDemo {
     protected final static Logger logger = LoggerFactory.getLogger(DLockDemo.class);
 
     public static void main(String[] args) {
-        testSedisDLock();
+        DLock dLock = testSedisDLock();
+        doDLock(dLock);
     }
 
-    private static void testLocalDLock() {
+    private static DLock testLocalDLock() {
         DLock dLock = DLockFactory.newLock(DLockType.Local, "TEST");
-        doDLock(dLock);
+        return dLock;
     }
 
-    private static void testSedisDLock() {
-
+    private static DLock testSedisDLock() {
         DLockFactory.setSedis(new Sedis("pay_ious_beta", "be1e8df1", "10.86.36.159:2181,10.86.36.176:2181,10.86.36.231:2181,10.86.37.227:2181,10.86.37.202:2181"));
-
         DLock dLock = DLockFactory.newLock(DLockType.Sedis, "TEST");
-        doDLock(dLock);
+        return dLock;
     }
 
-    private static void testZKDLock() {
+    private static DLock testZKDLock() {
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
         CuratorFramework client = CuratorFrameworkFactory.newClient("zk.beta.corp.qunar.com:2181", retryPolicy);
         client.start();
@@ -47,7 +46,7 @@ public class DLockDemo {
         DLockFactory.setClient(client);
 
         DLock dLock = DLockFactory.newLock(DLockType.ZK, "TEST");
-        doDLock(dLock);
+        return dLock;
     }
 
     private static void doDLock(final DLock dLock) {
