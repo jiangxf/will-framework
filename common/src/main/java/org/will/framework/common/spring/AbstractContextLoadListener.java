@@ -10,8 +10,9 @@ public abstract class AbstractContextLoadListener implements ApplicationListener
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
-        if (event.getApplicationContext().getParent() == null)//root application context 没有parent，他就是老大.
-        {
+
+        if (event.getApplicationContext().getParent() == null) {
+            //root application context 没有parent，他就是老大.
             afterAppContextLoad();
         }
         if (event.getApplicationContext().getDisplayName().equals("Root WebApplicationContext")) {
