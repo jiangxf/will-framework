@@ -52,7 +52,7 @@ public class LocalDLock extends DLock {
      * @return
      */
     @Override
-    protected void doUnlock(String key, String value) {
+    protected void releaseLock(String value) throws Exception {
         synchronized (LocalDLock.class) {
             lockKeyMap.remove(lockKey);
         }

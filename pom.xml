@@ -101,6 +101,12 @@
                 <version>1.7.21</version>
             </dependency>
 
+            <dependency>
+                <groupId>com.qunar.db</groupId>
+                <artifactId>dbaccess</artifactId>
+                <version>3.0.2</version>
+            </dependency>
+
             <!--<dependency>-->
             <!--<groupId>org.quartz-scheduler</groupId>-->
             <!--<artifactId>quartz</artifactId>-->

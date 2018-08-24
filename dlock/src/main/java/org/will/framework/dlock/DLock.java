@@ -17,7 +17,7 @@ import java.util.concurrent.locks.LockSupport;
  * Date: 2018-07-14
  * Time: 16:30
  */
-public abstract class DLock{
+public abstract class DLock {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(DLock.class);
 
@@ -33,8 +33,9 @@ public abstract class DLock{
 
     /**
      * 尝试获取锁
+     *
      * @param timeoutMS 尝试获取锁的过期时间
-     * @param expireMS 锁自动过期时间
+     * @param expireMS  锁自动过期时间
      * @return
      */
     public boolean tryLock(long timeoutMS, long expireMS) {
@@ -73,7 +74,7 @@ public abstract class DLock{
      * @param expireMS
      * @return
      */
-    protected boolean doLock(long timeoutMS, long expireMS) {
+    protected boolean doLock(long timeoutMS, long expireMS) throws Exception {
         final long startMillis = System.currentTimeMillis();
         final long millisToWait = timeoutMS > 0 ? timeoutMS : 0;
 
@@ -100,7 +101,7 @@ public abstract class DLock{
      *
      * @return
      */
-    protected abstract boolean createLock(long expireMS);
+    protected abstract boolean createLock(long expireMS) throws Exception;
 
     /**
      * 解锁
@@ -129,13 +130,15 @@ public abstract class DLock{
         }
 
         try {
-            doUnlock(lockKey, lockData.lockVal);
+            releaseLock(lockData.lockVal);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
         } finally {
             THREAD_LOCK_MAP.remove(curThread);
         }
     }
 
-    protected abstract void doUnlock(String key, String value);
+    protected abstract void releaseLock(String value) throws Exception;
 
     private static class LockData {
         final Thread curThread;
@@ -147,25 +150,25 @@ public abstract class DLock{
             this.lockVal = lockVal;
         }
 
+        private static LockData filter(List<LockData> lockDatas, String lockKey) {
+            if (lockDatas == null || lockDatas.size() == 0) {
+                return null;
+            }
+
+            for (LockData lockData : lockDatas) {
+                if (lockData.lockVal == lockKey) {
+                    return lockData;
+                }
+            }
+            return null;
+        }
+
         private int incrementAndGet() {
             return lockCount.incrementAndGet();
         }
 
         private int decrementAndGet() {
             return lockCount.decrementAndGet();
-        }
-
-        private static LockData filter(List<LockData> lockDatas, String lockKey) {
-            if (lockDatas == null || lockDatas.size() == 0) {
-                return null;
-            }
-
-            for (LockData lockData : lockDatas){
-                if(lockData.lockVal == lockKey){
-                    return lockData;
-                }
-            }
-            return null;
         }
     }
 }

@@ -1,4 +1,4 @@
-package org.will.framework.dlock.redis;
+package org.will.framework.dlock.jedis;
 
 import com.google.common.collect.Lists;
 import org.slf4j.LoggerFactory;
@@ -15,7 +15,7 @@ import java.util.List;
  * Date: 2018-07-14
  * Time: 16:30
  */
-public class RedisDLock extends DLock {
+public class JedisDLock extends DLock {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(DLock.class);
 
@@ -34,17 +34,18 @@ public class RedisDLock extends DLock {
 
     private Jedis jedis;
 
-    public RedisDLock(Jedis jedis, String lockKey) {
+    public JedisDLock(Jedis jedis, String lockKey) {
         super(lockKey);
         this.jedis = jedis;
     }
 
     /**
      * 创建锁，保证原子操作
+     *
      * @return
      */
     @Override
-    protected boolean createLock(long expireMS) {
+    protected boolean createLock(long expireMS) throws Exception {
         List<String> keys = Lists.newArrayList();
         keys.add(lockKey);
         List<String> args = Lists.newArrayList();
@@ -60,12 +61,13 @@ public class RedisDLock extends DLock {
 
     /**
      * 释放锁，保证原子操作
+     *
      * @return
      */
     @Override
-    protected void doUnlock(String key, String value) {
+    protected void releaseLock(String value) throws Exception {
         List<String> keys = new ArrayList<String>();
-        keys.add(key);
+        keys.add(lockKey);
         List<String> args = new ArrayList<String>();
         args.add(value);
         Object obj = jedis.eval(LUA_GET_DEL_SCRIPT, keys, args);

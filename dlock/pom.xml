@@ -68,6 +68,11 @@
         </dependency>
 
         <dependency>
+            <groupId>com.qunar.db</groupId>
+            <artifactId>dbaccess</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>will.framework</groupId>
             <artifactId>common</artifactId>
             <version>${project.version}</version>

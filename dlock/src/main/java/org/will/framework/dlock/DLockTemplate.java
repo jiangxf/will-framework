@@ -15,8 +15,8 @@ public abstract class DLockTemplate {
 
     /**
      * @param lockKey   锁id(对应业务唯一ID)
-     * @param timeoutMS  单位毫秒
-     * @param callback 回调函数
+     * @param timeoutMS 单位毫秒
+     * @param callback  回调函数
      * @return
      */
     public Object execute(String lockKey, long timeoutMS, long expireMS, DLockCallback callback) {
