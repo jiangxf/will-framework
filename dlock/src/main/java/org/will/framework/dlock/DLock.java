@@ -6,7 +6,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * Created with IntelliJ IDEA
@@ -18,6 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class DLock{
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(DLock.class);
+
+    private final static int RETRY_AWAIT_MS = 100;
 
     private final static ConcurrentMap<Thread, List<LockData>> THREAD_LOCK_MAP = Maps.newConcurrentMap();
 
@@ -48,7 +52,8 @@ public abstract class DLock{
                 return false;
             }
         } catch (Exception ex) {
-            return false;
+            // 适配异常
+            return true;
         }
 
         if (lockDatas == null) {
@@ -62,6 +67,42 @@ public abstract class DLock{
     }
 
     /**
+     * 创建 redis 锁的核心代码
+     *
+     * @param timeoutMS
+     * @param expireMS
+     * @return
+     */
+    protected boolean doLock(long timeoutMS, long expireMS) {
+        final long startMillis = System.currentTimeMillis();
+        final long millisToWait = timeoutMS > 0 ? timeoutMS : 0;
+
+        boolean lockStatus = false;
+        while (!lockStatus) {
+            lockStatus = createLock(expireMS);
+
+            // 成功占有锁
+            if (lockStatus) {
+                break;
+            }
+
+            // 等待超时，抢锁失败
+            if (System.currentTimeMillis() > startMillis + millisToWait + RETRY_AWAIT_MS) {
+                break;
+            }
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(RETRY_AWAIT_MS));
+        }
+        return lockStatus;
+    }
+
+    /**
+     * 创建锁，保证原子操作
+     *
+     * @return
+     */
+    protected abstract boolean createLock(long expireMS);
+
+    /**
      * 解锁
      */
     public void unlock() {
@@ -71,7 +112,8 @@ public abstract class DLock{
         // 创建锁失败，不能解锁
         LockData lockData = LockData.filter(lockDatas, lockKey);
         if (lockData == null) {
-            throw new IllegalMonitorStateException("You do not own the lock: " + lockKey);
+            logger.error("You do not own the lock: " + lockKey);
+            return;
         }
 
         // 同一个线程共享锁，计数减1
@@ -82,7 +124,8 @@ public abstract class DLock{
 
         // 计数不对，不能解锁
         if (newLockCount < 0) {
-            throw new IllegalMonitorStateException("Lock count has gone negative for lock: " + lockKey);
+            logger.error("Lock count has gone negative for lock: " + lockKey);
+            return;
         }
 
         try {
@@ -92,7 +135,6 @@ public abstract class DLock{
         }
     }
 
-    protected abstract boolean doLock(long timeoutMS, long expireMS);
     protected abstract void doUnlock(String key, String value);
 
     private static class LockData {
@@ -110,7 +152,7 @@ public abstract class DLock{
         }
 
         private int decrementAndGet() {
-            return lockCount.incrementAndGet();
+            return lockCount.decrementAndGet();
         }
 
         private static LockData filter(List<LockData> lockDatas, String lockKey) {

@@ -1,18 +1,12 @@
 package org.will.framework.dlock.redis;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.slf4j.LoggerFactory;
 import org.will.framework.dlock.DLock;
 import redis.clients.jedis.Jedis;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  * Created with IntelliJ IDEA
@@ -40,50 +34,17 @@ public class RedisDLock extends DLock {
 
     private Jedis jedis;
 
-
-
-    private final static int RETRY_AWAIT_MS = 100;
-
     public RedisDLock(Jedis jedis, String lockKey) {
         super(lockKey);
         this.jedis = jedis;
-    }
-
-
-    /**
-     * 创建 redis 锁的核心代码
-     * @param timeoutMS
-     * @param expireMS
-     * @return
-     */
-    @Override
-    protected boolean doLock(long timeoutMS, long expireMS) {
-        final long startMillis = System.currentTimeMillis();
-        final long millisToWait = timeoutMS > 0 ? timeoutMS : 0;
-
-        boolean lockStatus = false;
-        while (!lockStatus) {
-            lockStatus = createRedisKey(expireMS);
-
-            // 成功占有锁
-            if (lockStatus) {
-                break;
-            }
-
-            // 等待超时，抢锁失败
-            if (System.currentTimeMillis() > startMillis + millisToWait + RETRY_AWAIT_MS) {
-                break;
-            }
-            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(RETRY_AWAIT_MS));
-        }
-        return lockStatus;
     }
 
     /**
      * 创建锁，保证原子操作
      * @return
      */
-    private boolean createRedisKey(long expireMS) {
+    @Override
+    protected boolean createLock(long expireMS) {
         List<String> keys = Lists.newArrayList();
         keys.add(lockKey);
         List<String> args = Lists.newArrayList();
