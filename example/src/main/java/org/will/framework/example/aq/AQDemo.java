@@ -21,7 +21,7 @@ public class AQDemo {
 
     protected final static Logger logger = LoggerFactory.getLogger(AQDemo.class);
 
-    private static String topic = "TEST";
+    private static String topic = "TESTTESTTESTtestestest";
     private static AQQueue aqQueue = new LocalAQQueue();
 
     public static void main(String[] args) {
@@ -38,8 +38,15 @@ public class AQDemo {
 
         final AQProducer aqProducer = new AQProducer(aqProducerConfig, aqQueue);
 
+        aqProducer.clear(topic);
+
         final BookInfo bookInfo = new BookInfo();
-        bookInfo.setAuthor("will");
+        BookInfo.AuthorInfo authorInfo = new BookInfo.AuthorInfo();
+        authorInfo.setName("will");
+        authorInfo.setAge(32);
+        authorInfo.setSex("男");
+
+        bookInfo.setAuthorInfo(authorInfo);
         bookInfo.setPrice(69.5);
         bookInfo.setBookName("AQQueue从入门到放弃");
 
@@ -47,7 +54,7 @@ public class AQDemo {
             @Override
             public void run() {
                 int idx = 0;
-                while (idx++ < 10) {
+                while (idx++ < 100) {
                     bookInfo.setId("BID" + idx);
                     AQMessage aqMessage = new AQMessage(topic, bookInfo);
                     if (idx % 2 == 0) {

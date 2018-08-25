@@ -1,8 +1,11 @@
 package org.will.framework.aq.queue;
 
 import com.qunar.redis.storage.Sedis;
-
-import java.nio.charset.Charset;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.will.framework.aq.common.AQMessage;
+import org.will.framework.util.Base64;
+import org.will.framework.util.ProtoStuffUtil;
 
 /**
  * Created with IntelliJ IDEA
@@ -13,6 +16,8 @@ import java.nio.charset.Charset;
  */
 public class SedisAQQueue implements AQQueue {
 
+    protected final static Logger logger = LoggerFactory.getLogger(SedisAQQueue.class);
+
     Sedis sedis;
 
     public SedisAQQueue(Sedis sedis) {
@@ -20,13 +25,26 @@ public class SedisAQQueue implements AQQueue {
     }
 
     @Override
-    public void enqueue(String topic, byte[] message) {
-        sedis.rpush(topic, new String(message, Charset.forName("ISO-8859-1")));
+    public void enqueue(String topic, AQMessage message) {
+        try {
+            byte[] bytes = ProtoStuffUtil.serializer(message);
+            String str = new String(Base64.encode(bytes));
+            sedis.rpush(topic, str);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
     }
 
     @Override
-    public byte[] dequeue(String topic) {
-        return sedis.lpop(topic).getBytes(Charset.forName("ISO-8859-1"));
+    public AQMessage dequeue(String topic) {
+        try {
+            String str = sedis.lpop(topic);
+            byte[] bytes = Base64.decode(str.toCharArray());
+            return ProtoStuffUtil.deserializer(bytes, AQMessage.class);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return null;
+        }
     }
 
     @Override

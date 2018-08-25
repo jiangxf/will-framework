@@ -1,5 +1,7 @@
 package org.will.framework.aq.queue;
 
+import org.will.framework.aq.common.AQMessage;
+
 /**
  * Created with IntelliJ IDEA
  * Description:
@@ -9,9 +11,9 @@ package org.will.framework.aq.queue;
  */
 public interface AQQueue {
 
-    void enqueue(final String topic, byte[] message);
+    void enqueue(final String topic, AQMessage message);
 
-    byte[] dequeue(final String topic);
+    AQMessage dequeue(final String topic);
 
     long size(final String topic);
 

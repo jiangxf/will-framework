@@ -11,7 +11,7 @@ public class BookInfo {
     private String id;
     private String bookName;
     private double price;
-    private String author;
+    private AuthorInfo authorInfo;
 
     public String getId() {
         return id;
@@ -37,12 +37,12 @@ public class BookInfo {
         this.price = price;
     }
 
-    public String getAuthor() {
-        return author;
+    public AuthorInfo getAuthorInfo() {
+        return authorInfo;
     }
 
-    public void setAuthor(String author) {
-        this.author = author;
+    public void setAuthorInfo(AuthorInfo authorInfo) {
+        this.authorInfo = authorInfo;
     }
 
     @Override
@@ -51,7 +51,37 @@ public class BookInfo {
                 "id='" + id + '\'' +
                 ", bookName='" + bookName + '\'' +
                 ", price=" + price +
-                ", author='" + author + '\'' +
+                ", authorInfo='" + authorInfo + '\'' +
                 '}';
+    }
+
+    static class AuthorInfo {
+        private String name;
+        private int age;
+        private String sex;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public int getAge() {
+            return age;
+        }
+
+        public void setAge(int age) {
+            this.age = age;
+        }
+
+        public String getSex() {
+            return sex;
+        }
+
+        public void setSex(String sex) {
+            this.sex = sex;
+        }
     }
 }

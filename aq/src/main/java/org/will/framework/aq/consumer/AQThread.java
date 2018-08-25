@@ -26,7 +26,7 @@ public abstract class AQThread extends Thread {
             logger.info("线程 {} 正常断开", getName());
         } catch (Exception e) {
             exception = e;
-            logger.error("线程 {} 异常断开 Error:{}", getName(), e);
+            logger.error("线程 {} 异常断开 Error:", getName(), e);
         }
 
         doFinish(exception);

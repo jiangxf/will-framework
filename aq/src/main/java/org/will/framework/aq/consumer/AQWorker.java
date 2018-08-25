@@ -56,6 +56,7 @@ public abstract class AQWorker extends AQThread {
 
     /**
      * 获取消息
+     *
      * @return
      * @throws InterruptedException
      */
@@ -84,6 +85,7 @@ public abstract class AQWorker extends AQThread {
 
     /**
      * 消费消息
+     *
      * @param aqContext
      * @param data
      */
@@ -91,6 +93,7 @@ public abstract class AQWorker extends AQThread {
 
     /**
      * 随机等待
+     *
      * @throws InterruptedException
      */
     protected void randomSleep() throws InterruptedException {

@@ -1,5 +1,7 @@
 package org.will.framework.aq.queue;
 
+import org.will.framework.aq.common.AQMessage;
+import org.will.framework.util.ProtoStuffUtil;
 import redis.clients.jedis.ShardedJedis;
 
 /**
@@ -18,13 +20,18 @@ public class ShardedJedisAQQueue implements AQQueue {
     }
 
     @Override
-    public void enqueue(String topic, byte[] message) {
-        jedis.rpush(topic.getBytes(), message);
+    public void enqueue(String topic, AQMessage message) {
+        byte[] bytes = ProtoStuffUtil.serializer(message);
+        jedis.rpush(topic.getBytes(), bytes);
     }
 
     @Override
-    public byte[] dequeue(String topic) {
-        return jedis.lpop(topic.getBytes());
+    public AQMessage dequeue(String topic) {
+        byte[] bytes = jedis.lpop(topic.getBytes());
+        if (bytes == null || bytes.length == 0) {
+            return null;
+        }
+        return ProtoStuffUtil.deserializer(bytes, AQMessage.class);
     }
 
     @Override

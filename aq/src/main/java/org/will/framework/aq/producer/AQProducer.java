@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.will.framework.aq.common.AQMessage;
 import org.will.framework.aq.queue.AQQueue;
 import org.will.framework.util.IdWorker;
-import org.will.framework.util.ProtoStuffUtil;
 
 import java.util.List;
 
@@ -38,6 +37,7 @@ public class AQProducer {
 
     /**
      * 发送消息主方法
+     *
      * @param aqMessage
      * @return
      */
@@ -89,6 +89,7 @@ public class AQProducer {
 
     /**
      * 检查并初始化消息
+     *
      * @param aqMessage
      * @return
      */
@@ -97,7 +98,7 @@ public class AQProducer {
             throw new IllegalArgumentException("消息类型与消息体不能为空!");
         }
 
-        if(aqMessage.getSendTimestamp() <= 0) {
+        if (aqMessage.getSendTimestamp() <= 0) {
             aqMessage.setSendTimestamp(System.currentTimeMillis());
         }
 
@@ -129,9 +130,7 @@ public class AQProducer {
             doSleep(eachWaitMS);
             totalWaitMS -= eachWaitMS;
         }
-
-        byte[] bytes = ProtoStuffUtil.serializer(aqMessage);
-        aqQueue.enqueue(aqMessage.getTopic(), bytes);
+        aqQueue.enqueue(aqMessage.getTopic(), aqMessage);
     }
 
     private void afterSend(AQMessage aqMessage, Throwable throwable) {
@@ -144,6 +143,7 @@ public class AQProducer {
 
     /**
      * 加载配置文件
+     *
      * @param config
      */
     private void loadConfig(AQProducerConfig config) {

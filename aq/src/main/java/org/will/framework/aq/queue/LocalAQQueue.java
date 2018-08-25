@@ -1,5 +1,7 @@
 package org.will.framework.aq.queue;
 
+import org.will.framework.aq.common.AQMessage;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -14,15 +16,15 @@ import static org.will.framework.aq.common.AQConstants.DEFAULT_CAPACITY;
  */
 public class LocalAQQueue implements AQQueue {
 
-    private static final ConcurrentHashMap<String, LinkedBlockingQueue<byte[]>> LOCAL_QUEUE_MAP = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, LinkedBlockingQueue<AQMessage>> LOCAL_QUEUE_MAP = new ConcurrentHashMap<>();
 
     @Override
-    public void enqueue(String topic, byte[] message) {
+    public void enqueue(String topic, AQMessage message) {
         getQueue(topic).offer(message);
     }
 
     @Override
-    public byte[] dequeue(String topic) {
+    public AQMessage dequeue(String topic) {
         return getQueue(topic).poll();
     }
 
@@ -37,7 +39,7 @@ public class LocalAQQueue implements AQQueue {
         return true;
     }
 
-    private LinkedBlockingQueue<byte[]> getQueue(String topic) {
+    private LinkedBlockingQueue<AQMessage> getQueue(String topic) {
         LinkedBlockingQueue queue = LOCAL_QUEUE_MAP.get(topic);
         if (queue == null) {
             synchronized (LocalAQQueue.class.getName() + topic) {

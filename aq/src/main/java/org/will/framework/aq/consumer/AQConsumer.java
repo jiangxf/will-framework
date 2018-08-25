@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.will.framework.aq.common.AQContext;
 import org.will.framework.aq.common.AQMessage;
 import org.will.framework.aq.queue.AQQueue;
-import org.will.framework.util.ProtoStuffUtil;
 
 import java.math.BigDecimal;
 import java.util.Set;
@@ -124,11 +123,7 @@ public abstract class AQConsumer<DT> {
      */
     public AQMessage recv() {
         if (aqQueue.size(topic) > 0) {
-            byte[] bytes = aqQueue.dequeue(topic);
-            if (bytes == null || bytes.length == 0) {
-                return null;
-            }
-            return ProtoStuffUtil.deserializer(bytes, AQMessage.class);
+            return aqQueue.dequeue(topic);
         }
         return null;
     }
@@ -162,6 +157,7 @@ public abstract class AQConsumer<DT> {
 
     /**
      * 队列已使用长度
+     *
      * @return
      */
     public synchronized long size() {
@@ -170,6 +166,7 @@ public abstract class AQConsumer<DT> {
 
     /**
      * 获取限速令牌
+     *
      * @return
      */
     public synchronized void acquire() {
