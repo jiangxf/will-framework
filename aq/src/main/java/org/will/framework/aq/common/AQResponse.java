@@ -1,4 +1,4 @@
-package org.will.framework.aq;
+package org.will.framework.aq.common;
 
 
 import java.util.HashMap;
