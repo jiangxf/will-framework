@@ -11,29 +11,45 @@
 
     <artifactId>will-framework</artifactId>
     <packaging>jar</packaging>
-    <name>will-framework-all</name>
+    <name>all</name>
     <!--<version>2.7.0-SNAPSHOT</version>-->
-    <description>The all in one project of dubbo</description>
+    <description>The all in one project of will-framework</description>
     <properties>
         <skip_maven_deploy>false</skip_maven_deploy>
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>will.framework</groupId>
-            <artifactId>common</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <optional>true</optional>
-        </dependency>
+        <!--<dependency>-->
+        <!--<groupId>will.framework</groupId>-->
+        <!--<artifactId>common</artifactId>-->
+        <!--<version>${project.version}</version>-->
+        <!--<scope>compile</scope>-->
+        <!--<optional>true</optional>-->
+        <!--</dependency>-->
 
-        <dependency>
-            <groupId>will.framework</groupId>
-            <artifactId>utils</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <optional>true</optional>
-        </dependency>
+        <!--<dependency>-->
+        <!--<groupId>will.framework</groupId>-->
+        <!--<artifactId>utils</artifactId>-->
+        <!--<version>${project.version}</version>-->
+        <!--<scope>compile</scope>-->
+        <!--<optional>true</optional>-->
+        <!--</dependency>-->
+
+        <!--<dependency>-->
+        <!--<groupId>will.framework</groupId>-->
+        <!--<artifactId>aq</artifactId>-->
+        <!--<version>${project.version}</version>-->
+        <!--<scope>compile</scope>-->
+        <!--<optional>true</optional>-->
+        <!--</dependency>-->
+
+        <!--<dependency>-->
+        <!--<groupId>will.framework</groupId>-->
+        <!--<artifactId>dlock</artifactId>-->
+        <!--<version>${project.version}</version>-->
+        <!--<scope>compile</scope>-->
+        <!--<optional>true</optional>-->
+        <!--</dependency>-->
     </dependencies>
 
     <build>
@@ -57,6 +73,7 @@
                                     <include>will.framework:common</include>
                                     <include>will.framework:utils</include>
                                     <include>will.framework:aq</include>
+                                    <include>will.framework:dlock</include>
                                 </includes>
                             </artifactSet>
                         </configuration>

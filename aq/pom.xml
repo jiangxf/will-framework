@@ -40,13 +40,13 @@
         <dependency>
             <groupId>will.framework</groupId>
             <artifactId>common</artifactId>
-            <version>${project.version}</version>
+            <!--<version>${project.version}</version>-->
         </dependency>
 
         <dependency>
             <groupId>will.framework</groupId>
             <artifactId>utils</artifactId>
-            <version>${project.version}</version>
+            <!--<version>${project.version}</version>-->
         </dependency>
 
         <dependency>
